@@ -233,6 +233,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
         </button>
       </div>
       <SendDisclosure />
+      <p className="muted small limits-note">{t("interpret.limits")}</p>
 
       {images.length > 0 ? (
         <div className="thumbs">

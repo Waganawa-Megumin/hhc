@@ -31,4 +31,26 @@ describe("parseModelJson — defensive model-output parsing", () => {
     expect(stripCodeFences("```\n{}\n```")).toContain("{}");
     expect(stripCodeFences('{"a":1}')).toBe('{"a":1}');
   });
+
+  it("extracts JSON even when the model wraps it in prose", () => {
+    const raw = 'Here is the analysis you asked for:\n{"subject_hint":{"company":"Acme"},"matched_indicators":[]}\nHope that helps!';
+    const r = parseModelJson(raw, InterpretResultSchema);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.subject_hint.company).toBe("Acme");
+  });
+
+  it("tolerates messy field values (capitalized confidence, missing rationale, partial hint)", () => {
+    const raw = JSON.stringify({
+      subject_hint: { company: "Acme" },
+      matched_indicators: [{ id: "C2", confidence: "HIGH" }, { id: "D1", confidence: "weird-value", rationale: 42 }],
+      suggested_band: "high",
+    });
+    const r = parseModelJson(raw, InterpretResultSchema);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.matched_indicators[0]).toMatchObject({ id: "C2", confidence: "high" });
+      expect(r.value.matched_indicators[1]?.confidence).toBe("medium"); // bad value → fallback
+      expect(r.value.subject_hint.person).toBe(""); // missing field filled
+    }
+  });
 });

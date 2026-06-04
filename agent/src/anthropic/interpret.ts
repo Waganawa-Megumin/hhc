@@ -70,7 +70,7 @@ export async function interpret(req: InterpretRequest, complete: ModelComplete):
 
   let raw: string;
   try {
-    raw = await complete({ system: INTERPRET_SYSTEM, userText: req.text, images: req.images, maxTokens: 1024 });
+    raw = await complete({ system: INTERPRET_SYSTEM, userText: req.text, images: req.images, maxTokens: 2048 });
   } catch (e) {
     return { ok: false, error: `model_error: ${(e as Error).message}` };
   }

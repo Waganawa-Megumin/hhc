@@ -79,8 +79,8 @@
       "description": { "ja": "あなたが政府・防衛・研究機関の現職または元職（リスク係数）。", "en": "You are a current or former government/defense/research affiliate (a risk multiplier)." } },
 
     { "id": "F1", "category": "F", "type": "watchlist", "weight": 5, "critical": true, "requiresHumanConfirm": true,
-      "label": { "ja": "募集元/関連法人/個人/所属機関が指定リストに高確信で合致（人間確認）", "en": "Recruiter / related entity / person / affiliated institution matches a designation list with high confidence (human-confirmed)" },
-      "description": { "ja": "OFAC SDN・BIS Entity/Unverified/MEU・UN・EU・英OFSI・METI外国ユーザーリスト等への高確信合致。所属する勤務先・大学・研究機関の合致も含む。誤検出回避のため人間が同定確認した時のみ加点し、確認時は『高』へ強制昇格。", "en": "High-confidence match to OFAC SDN / BIS Entity-Unverified-MEU / UN / EU / UK OFSI / METI end-user list, etc., including a match on the affiliated employer/university/research institute. Scored only after a human confirms identity (to avoid false positives); when confirmed it forces the 'high' band." } },
+      "label": { "ja": "募集元/関連法人/個人/所属機関が指定リストに高確信で合致（自動確認・誤検出なら解除）", "en": "Recruiter / related entity / person / affiliated institution matches a designation list with high confidence (auto-confirmed; untick if a false positive)" },
+      "description": { "ja": "OFAC SDN・BIS Entity/Unverified/MEU・UN・EU・英OFSI・METI外国ユーザーリスト等への高確信合致（所属する勤務先・大学・研究機関の合致も含む）。OSINT照会で高確信の合致が見つかると自動でチェックし、＋5・『高』へ昇格します。同名・翻字による誤検出と判断したらチェックを外してください。", "en": "High-confidence match to OFAC SDN / BIS Entity-Unverified-MEU / UN / EU / UK OFSI / METI end-user list, etc. (including the affiliated employer/university/research institute). When OSINT finds a high-confidence match it is auto-ticked, adding +5 and forcing the 'high' band. Untick it if you judge it a transliteration/same-name false positive." } },
     { "id": "F2", "category": "F", "type": "watchlist", "weight": 3, "critical": false, "requiresHumanConfirm": true,
       "label": { "ja": "PEP/国家関与エンティティに合致", "en": "Matches a PEP / state-linked entity" },
       "description": { "ja": "重要公人（PEP）または国家関与エンティティへの合致（人間確認のうえ加点）。", "en": "Matches a politically exposed person (PEP) or a state-linked entity (scored after human confirmation)." } },

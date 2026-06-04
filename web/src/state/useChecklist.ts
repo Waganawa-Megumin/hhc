@@ -104,12 +104,19 @@ export function useChecklist(): ChecklistController {
 
   const applyOsintResult = useCallback(
     (r: OsintResult) => {
-      // Auto-apply F2/F3 watchlist candidates (F1 stays for explicit confirmation).
+      // Auto-apply F2/F3 watchlist candidates.
       const fromWatchlist: IndicatorMatch[] = r.watchlist_candidates
         .filter((w) => w.maps_to === "F2" || w.maps_to === "F3")
         .map((w) => ({ id: w.maps_to, confidence: "medium", rationale: `${w.list}: ${w.matched_entity}` }));
-      mergeSuggestions([...r.matched_indicators, ...fromWatchlist]);
+      // High-confidence F1 list hit → auto-confirm (the human unticks if it's a
+      // transliteration/same-name false positive). Surfaced with its rationale.
+      const f1 = r.watchlist_candidates.find((w) => w.maps_to === "F1");
+      const f1Suggestion: IndicatorMatch[] = f1
+        ? [{ id: "F1", confidence: "high", rationale: `${f1.list}: ${f1.matched_entity}` }]
+        : [];
+      mergeSuggestions([...r.matched_indicators, ...fromWatchlist, ...f1Suggestion]);
       tickMany([...r.matched_indicators.map((m) => m.id), ...fromWatchlist.map((m) => m.id)]);
+      if (f1) setHumanConfirmedF1(true);
       setSubjectHint((prev) => ({ ...(prev ?? { company: "", domain: "", person: "", title: "" }), ...r.subject_hint }));
       setOsint(r);
     },

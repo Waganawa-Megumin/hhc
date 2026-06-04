@@ -37,9 +37,9 @@
     "heading": "Recommended action"
   },
   "f": {
-    "heading": "Sanctions / watchlist match (human-confirmed)",
-    "confirmF1": "I have confirmed this designation-list match as a human (adds F1 and forces the 'high' band)",
-    "f1Pending": "Candidate: needs human identity confirmation (not scored until confirmed)",
+    "heading": "Sanctions / watchlist match (auto + confirm)",
+    "confirmF1": "Confirm list match (auto-ticked on a high-confidence OSINT hit; untick to not score)",
+    "f1Pending": "Not scored (no/unconfirmed match; auto-ticked when OSINT finds a high-confidence hit)",
     "f3Note": "Weak match: shown for reference only, never added to the score"
   },
   "nationality": {

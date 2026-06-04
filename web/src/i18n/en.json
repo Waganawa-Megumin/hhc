@@ -43,8 +43,11 @@
     "f3Note": "Weak match: shown for reference only, never added to the score"
   },
   "nationality": {
-    "heading": "Nationality (optional, non-scored context)",
-    "placeholder": "Claimed nationality, if any (optional)"
+    "heading": "Nationality / origin (optional)",
+    "placeholder": "Subject's claimed/known nationality or origin (optional)",
+    "matched": "May match a state of concern → ",
+    "addG1": "Add G1",
+    "concernHeading": "Edit states-of-concern list (comma-separated)"
   },
   "interpret": {
     "heading": "AI interpret (optional)",

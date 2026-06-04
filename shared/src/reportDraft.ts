@@ -33,8 +33,8 @@ const L = {
   context: { ja: "参考（非加点の文脈）", en: "Context (non-scored)" },
   none: { ja: "なし", en: "none" },
   disclaimer: {
-    ja: "本書は断定・告発ではありません。指標合致と公開情報に基づく自衛上のリスク評価であり、特定個人を外国情報機関の構成員と断定するものではありません。国籍・民族は判定に使用していません。",
-    en: "This is not an accusation. It is a self-defense risk assessment based on indicator matches and public information; it does not assert any individual is an operative of a foreign service. Nationality/ethnicity were not used in the assessment.",
+    ja: "本書は断定・告発ではありません。指標合致と公開情報に基づく自衛上のリスク評価であり、特定個人を外国情報機関の構成員と断定するものではありません。民族の自動推論は行っていません。",
+    en: "This is not an accusation. It is a self-defense risk assessment based on indicator matches and public information; it does not assert any individual is an operative of a foreign service. No automated ethnicity inference was performed.",
   },
 } as const;
 

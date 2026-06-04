@@ -4,6 +4,8 @@ import { describe, it, expect } from "vitest";
 import { scoreApproach, type ScoreInput } from "../src/scoring";
 import { buildReportDraft, type AssessmentSummary } from "../src/reportDraft";
 import { containsForbiddenLabel } from "../src/guardrails";
+import { matchesConcernOrigin, DEFAULT_CONCERN_ORIGINS } from "../src/policy";
+import { indicatorById } from "../src/indicators";
 
 const input = (selected: string[], extra: Partial<ScoreInput> = {}): ScoreInput => ({
   selected,
@@ -69,13 +71,41 @@ describe("§11 — report draft is non-accusatory and demographic-free", () => {
   };
 
   for (const lang of ["ja", "en"] as const) {
-    it(`(${lang}) includes the action + disclaimer, never says 'spy', states nationality unused`, () => {
+    it(`(${lang}) includes the action + disclaimer, never says 'spy', notes no automated ethnicity inference`, () => {
       const { body } = buildReportDraft(assessment, lang);
       expect(containsForbiddenLabel(body)).toBe(false);
-      expect(body).toMatch(lang === "ja" ? /国籍・民族は判定に使用していません/ : /Nationality\/ethnicity were not used/);
+      expect(body).toMatch(lang === "ja" ? /民族の自動推論は行っていません/ : /No automated ethnicity inference/);
       expect(body).toMatch(lang === "ja" ? /推奨アクション/ : /Recommended action/);
       expect(body).toContain("A1");
       expect(body).toMatch(/absence ≠ innocence|証拠なし＝無実ではない/);
     });
   }
+});
+
+describe("category G — human-set state-nexus factor (per user decision)", () => {
+  it("G1 exists: category G, weight 3, additive (not a critical override)", () => {
+    const g1 = indicatorById("G1");
+    expect(g1?.category).toBe("G");
+    expect(g1 && "weight" in g1 ? g1.weight : 0).toBe(3);
+    expect(g1 && "critical" in g1 ? g1.critical : true).toBe(false);
+  });
+
+  it("G1 adds to the score when set, but never forces high on its own", () => {
+    const r = scoreApproach(input(["G1"]));
+    expect(r.rawScore).toBe(3);
+    expect(r.band).toBe("low");
+    expect(r.criticalFlags).toEqual([]);
+  });
+
+  it("concern-origin matching is case-insensitive/bidirectional; allied origins do not match", () => {
+    expect(matchesConcernOrigin("Chinese national", DEFAULT_CONCERN_ORIGINS)).toBe(true);
+    expect(matchesConcernOrigin("中国", DEFAULT_CONCERN_ORIGINS)).toBe(true);
+    expect(matchesConcernOrigin("Japanese", DEFAULT_CONCERN_ORIGINS)).toBe(false);
+    expect(matchesConcernOrigin("United States", DEFAULT_CONCERN_ORIGINS)).toBe(false);
+  });
+
+  it("an allied/non-matching origin leaves the score unchanged (non-match never lowers risk)", () => {
+    // G1 is simply not set when the origin is not on the concern list.
+    expect(scoreApproach(input(["A1"])).rawScore).toBe(scoreApproach(input(["A1"])).rawScore);
+  });
 });

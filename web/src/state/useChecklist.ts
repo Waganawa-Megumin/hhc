@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   scoreApproach,
+  DEFAULT_CONCERN_ORIGINS,
   type ScoreResult,
   type InterpretResult,
   type OsintResult,
@@ -21,8 +22,10 @@ export interface ChecklistController {
   selected: Set<string>;
   coefficients: Record<CoefficientId, boolean>;
   humanConfirmedF1: boolean;
-  /** Non-scored context only (design §0 / plan): never fed to scoreApproach. */
+  /** Free-text origin/nationality used to help the human decide G1 (never scored directly). */
   nationalityContext: string;
+  /** User's configurable "states of concern" list for the category-G nexus factor. */
+  concernOrigins: string[];
   /** AI-suggested indicators (§6) — shown but NOT scored until the human ticks them. */
   suggestions: Record<string, IndicatorMatch>;
   subjectHint: SubjectHint | null;
@@ -33,6 +36,7 @@ export interface ChecklistController {
   toggleCoefficient: (id: CoefficientId) => void;
   setHumanConfirmedF1: (v: boolean) => void;
   setNationalityContext: (v: string) => void;
+  setConcernOrigins: (v: string[]) => void;
   applyInterpretResult: (r: InterpretResult) => void;
   applyOsintResult: (r: OsintResult) => void;
   reset: () => void;
@@ -43,6 +47,7 @@ export function useChecklist(): ChecklistController {
   const [coefficients, setCoefficients] = useState<Record<CoefficientId, boolean>>({ E1: false, E2: false });
   const [humanConfirmedF1, setHumanConfirmedF1] = useState(false);
   const [nationalityContext, setNationalityContext] = useState("");
+  const [concernOrigins, setConcernOrigins] = useState<string[]>([...DEFAULT_CONCERN_ORIGINS]);
   const [suggestions, setSuggestions] = useState<Record<string, IndicatorMatch>>({});
   const [subjectHint, setSubjectHint] = useState<SubjectHint | null>(null);
   const [aiNotes, setAiNotes] = useState<AiNotes | null>(null);
@@ -92,6 +97,7 @@ export function useChecklist(): ChecklistController {
     setCoefficients({ E1: false, E2: false });
     setHumanConfirmedF1(false);
     setNationalityContext("");
+    setConcernOrigins([...DEFAULT_CONCERN_ORIGINS]);
     setSuggestions({});
     setSubjectHint(null);
     setAiNotes(null);
@@ -110,6 +116,7 @@ export function useChecklist(): ChecklistController {
     coefficients,
     humanConfirmedF1,
     nationalityContext,
+    concernOrigins,
     suggestions,
     subjectHint,
     aiNotes,
@@ -119,6 +126,7 @@ export function useChecklist(): ChecklistController {
     toggleCoefficient,
     setHumanConfirmedF1,
     setNationalityContext,
+    setConcernOrigins,
     applyInterpretResult,
     applyOsintResult,
     reset,

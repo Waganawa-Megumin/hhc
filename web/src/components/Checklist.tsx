@@ -3,8 +3,10 @@ import {
   CATEGORIES,
   indicatorsByCategory,
   coefficientIndicators,
-  NATIONALITY_NOT_SCORED_NOTE,
+  matchesConcernOrigin,
+  ORIGIN_NEXUS_NOTE,
   type CategoryId,
+  type Indicator,
   type WatchlistIndicator,
 } from "@hhc/shared";
 import { useLang } from "../i18n";
@@ -65,6 +67,8 @@ export function Checklist({ c }: { c: ChecklistController }) {
         </fieldset>
       ))}
 
+      <GCategory c={c} />
+
       <FCategory c={c} />
 
       <fieldset className="cat coeff">
@@ -87,8 +91,6 @@ export function Checklist({ c }: { c: ChecklistController }) {
           );
         })}
       </fieldset>
-
-      <NationalityContext c={c} />
     </section>
   );
 }
@@ -161,12 +163,32 @@ function FCategory({ c }: { c: ChecklistController }) {
   );
 }
 
-function NationalityContext({ c }: { c: ChecklistController }) {
+function GCategory({ c }: { c: ChecklistController }) {
   const { t } = useTranslation();
   const lang = useLang();
+  const g1 = indicatorsByCategory("G")[0] as Indicator | undefined;
+  if (!g1) return null;
+  const matched = matchesConcernOrigin(c.nationalityContext, c.concernOrigins);
+  const g1Selected = c.selected.has("G1");
+
   return (
-    <fieldset className="cat nationality">
-      <legend>{t("nationality.heading")}</legend>
+    <fieldset className="cat g-cat">
+      <legend>
+        <span className="cat-id">G</span> {CATEGORIES.G.label[lang]}
+      </legend>
+
+      <label className="indicator">
+        <input type="checkbox" checked={g1Selected} onChange={() => c.toggle("G1")} />
+        <span className="ind-body">
+          <span className="ind-label">
+            <span className="ind-id">G1</span> {g1.label[lang]}
+            <span className="weight-chip">+{"weight" in g1 ? g1.weight : 0}</span>
+          </span>
+          <span className="ind-desc">{g1.description[lang]}</span>
+          <SuggestionHint c={c} id="G1" />
+        </span>
+      </label>
+
       <input
         type="text"
         className="nationality-input"
@@ -174,7 +196,33 @@ function NationalityContext({ c }: { c: ChecklistController }) {
         placeholder={t("nationality.placeholder")}
         onChange={(e) => c.setNationalityContext(e.target.value)}
       />
-      <p className="ind-desc note">{NATIONALITY_NOT_SCORED_NOTE[lang]}</p>
+      {matched && !g1Selected ? (
+        <div className="nexus-suggest">
+          {t("nationality.matched")}
+          <button type="button" className="primary small-btn" onClick={() => c.toggle("G1")}>
+            {t("nationality.addG1")}
+          </button>
+        </div>
+      ) : null}
+
+      <details className="concern-editor">
+        <summary>{t("nationality.concernHeading")}</summary>
+        <input
+          type="text"
+          className="nationality-input"
+          value={c.concernOrigins.join(", ")}
+          onChange={(e) =>
+            c.setConcernOrigins(
+              e.target.value
+                .split(/[,、]/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            )
+          }
+        />
+      </details>
+
+      <p className="ind-desc note">{ORIGIN_NEXUS_NOTE[lang]}</p>
     </fieldset>
   );
 }

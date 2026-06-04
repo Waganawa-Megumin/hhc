@@ -4,7 +4,7 @@ import raw from "./indicators.json";
 
 export type Lang = "ja" | "en";
 export type LocalizedText = Record<Lang, string>;
-export type CategoryId = "A" | "B" | "C" | "D" | "E" | "F";
+export type CategoryId = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type IndicatorType = "weight" | "coefficient" | "watchlist";
 
 export interface WeightIndicator {

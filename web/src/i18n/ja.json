@@ -43,8 +43,11 @@
     "f3Note": "弱い一致：参考表示のみ・スコアには加算しません"
   },
   "nationality": {
-    "heading": "国籍（任意・非加点の判断材料）",
-    "placeholder": "申告された国籍があれば入力（任意）"
+    "heading": "国籍・出身（任意）",
+    "placeholder": "相手の申告/判明した国籍・出身（任意）",
+    "matched": "懸念国・懸念機関に該当の可能性 → ",
+    "addG1": "G1を加点",
+    "concernHeading": "懸念国・懸念機関リストを編集（カンマ区切り）"
   },
   "interpret": {
     "heading": "AI解釈（任意）",

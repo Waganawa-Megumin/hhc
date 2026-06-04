@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "note": "HHC threat-indicator knowledge base (design spec §2). Weights and overrides are authoritative; scoring.ts consumes this file. Nationality/ethnicity are deliberately NOT indicators (see design spec §0 and the plan's 'nationality/ethnicity/education' section): state/intelligence nexus is captured by category F (entity/affiliation/list matching), not by demographic attributes.",
+  "note": "HHC threat-indicator knowledge base (design spec §2). Weights and overrides are authoritative; scoring.ts consumes this file. State/intelligence nexus is captured primarily by category F (entity/affiliation/list matching). Per user decision (assume Japanese/allied users; personal defensive tool), category G adds a HUMAN-SET nationality/origin/state-affiliation 'state of concern' factor: it is set by a person (or from an explicitly stated/entity-established affiliation), uses a configurable concern list, performs NO automated ethnicity inference, and a non-match NEVER lowers risk (fake/third-country identities evade it).",
   "bands": {
     "low": { "min": 0, "max": 5 },
     "mid": { "min": 6, "max": 12 },
@@ -12,7 +12,8 @@
     "C": { "label": { "ja": "コミュニケーション挙動", "en": "Communication behaviour" } },
     "D": { "label": { "ja": "要求内容", "en": "What is being asked" } },
     "E": { "label": { "ja": "標的属性（係数）", "en": "Target attributes (coefficients)" } },
-    "F": { "label": { "ja": "制裁・輸出管理・ウォッチリスト合致", "en": "Sanctions / export-control / watchlist match" } }
+    "F": { "label": { "ja": "制裁・輸出管理・ウォッチリスト合致", "en": "Sanctions / export-control / watchlist match" } },
+    "G": { "label": { "ja": "国家ネクサス（人手設定・任意）", "en": "State nexus (human-set, optional)" } }
   },
   "indicators": [
     { "id": "A1", "category": "A", "type": "weight", "weight": 3, "critical": false,
@@ -85,7 +86,11 @@
       "description": { "ja": "重要公人（PEP）または国家関与エンティティへの合致（人間確認のうえ加点）。", "en": "Matches a politically exposed person (PEP) or a state-linked entity (scored after human confirmation)." } },
     { "id": "F3", "category": "F", "type": "watchlist", "weight": 0, "critical": false, "flagOnly": true,
       "label": { "ja": "名称の曖昧/弱い一致（要確認フラグ・非加点）", "en": "Ambiguous/weak name match (review flag only, no score)" },
-      "description": { "ja": "翻字揺れ・同名異人の可能性がある弱い一致。スコアには加算せず、人間に提示するのみ。", "en": "A weak match that may be a transliteration variant or a different person with the same name. Not added to the score; shown to the human only." } }
+      "description": { "ja": "翻字揺れ・同名異人の可能性がある弱い一致。スコアには加算せず、人間に提示するのみ。", "en": "A weak match that may be a transliteration variant or a different person with the same name. Not added to the score; shown to the human only." } },
+
+    { "id": "G1", "category": "G", "type": "weight", "weight": 3, "critical": false, "requiresHumanConfirm": true,
+      "label": { "ja": "相手の国籍・出身・国家所属が懸念国/懸念機関に該当（人手判断）", "en": "Subject's nationality / origin / state affiliation matches a state of concern (human judgement)" },
+      "description": { "ja": "申告または判明した国籍・出身・国家機関との所属が、設定した懸念国・懸念機関に該当する（人手で確認・自動の民族推論はしない）。偽装・第三国フロント・偽の西側身元で回避されうるため、非該当でもリスクは下げない。", "en": "The claimed or established nationality / origin / state-organ affiliation matches your configured states of concern (human-confirmed; no automated ethnicity inference). It can be evaded via fake / third-country / fake-Western identities, so a non-match never lowers risk." } }
   ],
   "criticalOverrides": [
     { "id": "D3", "kind": "single", "indicators": ["D3"],

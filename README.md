@@ -15,15 +15,21 @@ guidance.
   **recommended action**.
 - It uses **public, lawful sources only** (no LinkedIn scraping, no login-gated
   access).
-- **Nationality and ethnicity are never scored.** Demographic profiling is both
-  discriminatory and a poor predictor (real tradecraft uses third-country fronts
-  and fake Western identities). The "state / intelligence nexus" you actually care
-  about is captured by **category F** — matching the entity, person, and
-  **affiliated institution** (employer / university / research institute) against
-  public danger lists (OFAC, BIS Entity List, OpenSanctions, PEP, METI, …).
-  Education is judged by **verifiability (B3)** and **listed-institution match
-  (F)**, not by where someone studied. A claimed nationality may be shown as
-  **non-scored context** for your own judgement only.
+- **State / intelligence nexus is captured primarily by category F** — matching
+  the entity, person, and **affiliated institution** (employer / university /
+  research institute) against public danger lists (OFAC, BIS Entity List,
+  OpenSanctions, PEP, METI, …). Education is judged by **verifiability (B3)** and
+  **listed-institution match (F)**, not by where someone studied.
+- **Category G (state nexus, optional)** is a **human-set** nationality / origin /
+  state-affiliation factor for the intended audience (Japanese / allied users
+  triaging an inbound approach). It uses a **configurable "states of concern"
+  list**, performs **no automated ethnicity inference** (the AI/OSINT may only map
+  an *explicitly stated or entity-established* affiliation, never a guess from a
+  photo or name), and — like everything else — a **non-match never lowers risk**
+  (fake / third-country / fake-Western identities evade it). It is carried as an
+  indicator id (`G1`), so the score computation and the case DB never store a raw
+  nationality string.
+- It still **never** labels a person a "spy" and renders no guilty verdict.
 - "No evidence" is **not** evidence of innocence. Absence from a list never lowers
   the score.
 

@@ -1,13 +1,15 @@
-// §0 hard guardrails, enforced in code.
+// Guardrails, enforced in code.
 //
-// Two distinct concerns:
 //  1. Accusatory labelling — model output (§6/§7) must never call a person a
 //     "spy"/工作員 etc. stripForbiddenLabels() scrubs model-generated text.
-//  2. Demographic scoring — nationality/ethnicity must never enter the score or
-//     the persisted case DB. assertNoDemographicScoringFields() guards those
-//     structures. NOTE: a transient, non-scored UI "context" object MAY display a
-//     claimed nationality for the human's own judgement; that object is never
-//     passed to scoring or written to the DB, so it is not checked here.
+//  2. No raw demographic strings in the score computation or the persisted case
+//     DB, and no automated ethnicity inference. The state-nexus factor the user
+//     enabled (category G) is carried as an INDICATOR ID (G1) that a human sets —
+//     not as a raw "nationality" field — so the scoring input and DB records stay
+//     free of demographic strings. assertNoDemographicScoringFields() enforces
+//     that: a stray nationality/ethnicity field in those structures is rejected.
+//     A transient UI origin string may exist to help the human decide G1, but it
+//     is never passed to scoring or written to the DB, so it is not checked here.
 
 /** Accusatory verdict words that must not appear in AI/agent output about a person. */
 export const FORBIDDEN_VERDICT_PATTERNS: readonly RegExp[] = [
@@ -83,8 +85,8 @@ export function assertNoDemographicScoringFields(value: unknown, context: string
   }
 }
 
-/** Shown next to any non-scored nationality context in the UI. */
-export const NATIONALITY_NOT_SCORED_NOTE = {
-  ja: "国籍は判断材料として表示しています（自動スコアには加算しません）。検知は所属・リスト突合（カテゴリF）で行います。",
-  en: "Nationality is shown for your judgement only; it is not added to the automated score. Detection relies on affiliation/list matching (category F).",
+/** Shown next to the category-G state-nexus input in the UI. */
+export const ORIGIN_NEXUS_NOTE = {
+  ja: "国籍・出身が設定した懸念国・懸念機関に該当する場合、人手判断で指標G1として加点に寄与します。自動の民族推論は行いません。偽装・第三国フロント・偽の西側身元で回避されうるため、非該当でもリスクは下げません。主たる検知は所属・リスト突合（カテゴリF）です。",
+  en: "When the nationality/origin matches your configured states of concern, it contributes to the score via indicator G1 (human-set). No automated ethnicity inference. It can be evaded by fake / third-country / fake-Western identities, so a non-match never lowers risk. Primary detection is affiliation/list matching (category F).",
 } as const;

@@ -127,6 +127,9 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .consent-body { margin: 0; color: var(--muted); font-size: 0.86rem; }
 .intake-text { width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.6rem 0.7rem; font-family: inherit; resize: vertical; }
 .intake-text:disabled { opacity: 0.5; }
+.dropzone { position: relative; border-radius: 8px; }
+.dropzone.dragover { outline: 2px dashed var(--accent); outline-offset: 3px; }
+.drop-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(110,168,254,0.12); color: var(--accent); font-weight: 700; border-radius: 8px; pointer-events: none; }
 .intake-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; flex-wrap: wrap; }
 .intake-actions .spacer { flex: 1; }
 .osint-toggle { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--muted); cursor: pointer; }

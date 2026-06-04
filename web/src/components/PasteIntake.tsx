@@ -77,32 +77,41 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
   const [phase, setPhase] = useState<"idle" | "interpret" | "osint">("idle");
   const [withOsint, setWithOsint] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   const backendReady = health?.ok === true;
   const offline = health?.offline === true;
   const noKey = health ? health.anthropicKey === false : false;
   const canSend = backendReady && !offline && !noKey && !busy && (text.trim().length > 0 || images.length > 0);
 
-  async function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
-    const files = Array.from(e.clipboardData.items)
-      .filter((it) => it.kind === "file" && (it.type.startsWith("image/") || it.type === "application/pdf"))
-      .map((it) => it.getAsFile())
-      .filter((f): f is File => f !== null);
+  async function addFiles(incoming: File[]) {
+    const files = incoming.filter((f) => f.type.startsWith("image/") || f.type === "application/pdf");
     if (files.length === 0) return;
-    e.preventDefault();
-    const read = (await Promise.all(files.map(readAttachment))).filter((a): a is Attachment => a !== null);
-    setImages((prev) => [...prev, ...read].slice(0, 8));
-  }
-
-  async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).filter(
-      (f) => f.type.startsWith("image/") || f.type === "application/pdf",
-    );
     const read = await Promise.all(files.map(readAttachment));
     const ok = read.filter((a): a is Attachment => a !== null);
     if (ok.length < files.length) setError(t("interpret.pdfTooLarge"));
     setImages((prev) => [...prev, ...ok].slice(0, 8));
+  }
+
+  async function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const files = Array.from(e.clipboardData.items)
+      .filter((it) => it.kind === "file")
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => f !== null);
+    if (files.length === 0) return;
+    e.preventDefault();
+    await addFiles(files);
+  }
+
+  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    void addFiles(Array.from(e.target.files ?? []));
     e.target.value = "";
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    void addFiles(Array.from(e.dataTransfer.files));
   }
 
   async function runAnalyze() {
@@ -149,14 +158,25 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       </div>
       <p className="muted">{t("interpret.intro")}</p>
 
-      <textarea
-        className="intake-text"
-        rows={5}
-        placeholder={t("interpret.textareaPlaceholder")}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onPaste={onPaste}
-      />
+      <div
+        className={dragging ? "dropzone dragover" : "dropzone"}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!dragging) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
+        <textarea
+          className="intake-text"
+          rows={5}
+          placeholder={t("interpret.textareaPlaceholder")}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onPaste={onPaste}
+        />
+        {dragging ? <div className="drop-hint">{t("interpret.dropHint")}</div> : null}
+      </div>
       <div className="intake-actions">
         <label className="ghost file-btn">
           {t("interpret.addImages")}

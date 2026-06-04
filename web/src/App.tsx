@@ -51,8 +51,8 @@ export default function App() {
       <main className="layout">
         <div className="left-col">
           <PasteIntake c={c} health={health} />
-          <Checklist c={c} />
           <OsintPanel c={c} health={health} />
+          <Checklist c={c} />
           <CaseHistoryPanel c={c} health={health} />
         </div>
         <aside className="results">

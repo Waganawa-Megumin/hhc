@@ -45,6 +45,11 @@ export function Checklist({ c }: { c: ChecklistController }) {
         </div>
       </div>
 
+      {/* Auto-filled, high-signal categories first (OSINT-derived F, then G). */}
+      <FCategory c={c} />
+
+      <GCategory c={c} />
+
       {WEIGHT_CATEGORIES.map((cat) => (
         <fieldset key={cat} className="cat">
           <legend>
@@ -66,10 +71,6 @@ export function Checklist({ c }: { c: ChecklistController }) {
           ))}
         </fieldset>
       ))}
-
-      <GCategory c={c} />
-
-      <FCategory c={c} />
 
       <fieldset className="cat coeff">
         <legend>

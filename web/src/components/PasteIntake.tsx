@@ -69,6 +69,23 @@ async function readAttachment(file: File): Promise<Attachment | null> {
   }
 }
 
+const MAX_TEXT_BYTES = 200 * 1024;
+const TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|log|ya?ml|html?|eml|text)$/i;
+
+function isMedia(f: File): boolean {
+  return f.type.startsWith("image/") || f.type === "application/pdf";
+}
+
+function isTextFile(f: File): boolean {
+  return f.type.startsWith("text/") || f.type === "application/json" || TEXT_EXT.test(f.name);
+}
+
+async function readTextFile(file: File): Promise<{ name: string; body: string; truncated: boolean }> {
+  const truncated = file.size > MAX_TEXT_BYTES;
+  const body = await (truncated ? file.slice(0, MAX_TEXT_BYTES) : file).text();
+  return { name: file.name, body, truncated };
+}
+
 export function PasteIntake({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
@@ -85,12 +102,23 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
   const canSend = backendReady && !offline && !noKey && !busy && (text.trim().length > 0 || images.length > 0);
 
   async function addFiles(incoming: File[]) {
-    const files = incoming.filter((f) => f.type.startsWith("image/") || f.type === "application/pdf");
-    if (files.length === 0) return;
-    const read = await Promise.all(files.map(readAttachment));
-    const ok = read.filter((a): a is Attachment => a !== null);
-    if (ok.length < files.length) setError(t("interpret.pdfTooLarge"));
-    setImages((prev) => [...prev, ...ok].slice(0, 8));
+    const media = incoming.filter(isMedia);
+    const texts = incoming.filter((f) => !isMedia(f) && isTextFile(f));
+
+    if (media.length > 0) {
+      const read = await Promise.all(media.map(readAttachment));
+      const ok = read.filter((a): a is Attachment => a !== null);
+      if (ok.length < media.length) setError(t("interpret.pdfTooLarge"));
+      setImages((prev) => [...prev, ...ok].slice(0, 8));
+    }
+    if (texts.length > 0) {
+      // Text files are folded into the textarea (transparent + editable).
+      const parts = await Promise.all(texts.map(readTextFile));
+      const appended = parts
+        .map((p) => `\n\n----- ${p.name} -----\n${p.body}${p.truncated ? "\n…(truncated)" : ""}`)
+        .join("");
+      setText((prev) => (prev + appended).replace(/^\n+/, ""));
+    }
   }
 
   async function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
@@ -180,7 +208,13 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       <div className="intake-actions">
         <label className="ghost file-btn">
           {t("interpret.addImages")}
-          <input type="file" accept="image/*,application/pdf" multiple hidden onChange={onPickFiles} />
+          <input
+            type="file"
+            accept="image/*,application/pdf,text/*,.md,.markdown,.csv,.tsv,.log,.json,.yml,.yaml,.eml"
+            multiple
+            hidden
+            onChange={onPickFiles}
+          />
         </label>
         <label className="osint-toggle small">
           <input type="checkbox" checked={withOsint} onChange={(e) => setWithOsint(e.target.checked)} disabled={busy} />

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   scoreApproach,
+  indicatorById,
   DEFAULT_CONCERN_ORIGINS,
   type ScoreResult,
   type InterpretResult,
@@ -74,22 +75,45 @@ export function useChecklist(): ChecklistController {
     });
   }, []);
 
+  // Auto-tick AI/OSINT matches into the checklist (the human can still untick).
+  // F1 is excluded — it forces the high band, so it stays a one-click confirm to
+  // guard against transliteration/same-name false positives. E coefficients are
+  // about YOU, not the subject, so they are never auto-set.
+  const tickMany = useCallback((ids: string[]) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (id === "F1") continue;
+        const ind = indicatorById(id);
+        if (!ind || ind.type === "coefficient") continue;
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
   const applyInterpretResult = useCallback(
     (r: InterpretResult) => {
       mergeSuggestions(r.matched_indicators);
+      tickMany(r.matched_indicators.map((m) => m.id));
       setSubjectHint(r.subject_hint);
       setAiNotes({ notes: r.notes_for_user, observations: r.free_observations, suggestedBand: r.suggested_band });
     },
-    [mergeSuggestions],
+    [mergeSuggestions, tickMany],
   );
 
   const applyOsintResult = useCallback(
     (r: OsintResult) => {
-      mergeSuggestions(r.matched_indicators);
+      // Auto-apply F2/F3 watchlist candidates (F1 stays for explicit confirmation).
+      const fromWatchlist: IndicatorMatch[] = r.watchlist_candidates
+        .filter((w) => w.maps_to === "F2" || w.maps_to === "F3")
+        .map((w) => ({ id: w.maps_to, confidence: "medium", rationale: `${w.list}: ${w.matched_entity}` }));
+      mergeSuggestions([...r.matched_indicators, ...fromWatchlist]);
+      tickMany([...r.matched_indicators.map((m) => m.id), ...fromWatchlist.map((m) => m.id)]);
       setSubjectHint((prev) => ({ ...(prev ?? { company: "", domain: "", person: "", title: "" }), ...r.subject_hint }));
       setOsint(r);
     },
-    [mergeSuggestions],
+    [mergeSuggestions, tickMany],
   );
 
   const reset = useCallback(() => {

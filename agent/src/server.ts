@@ -1,6 +1,7 @@
 import Fastify from "fastify";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { SubjectHintSchema, computeStats } from "@hhc/shared";
+import { SubjectHintSchema, computeStats, type OsintResult } from "@hhc/shared";
 import { env, hasAnthropicKey, isOffline } from "./env";
 import { interpret, type InterpretRequest } from "./anthropic/interpret";
 import { runOsint } from "./anthropic/osintAgent";
@@ -40,6 +41,19 @@ const InterpretBodySchema = z.object({
   consent: z.boolean().default(false),
 });
 
+interface OsintJob {
+  status: "running" | "done" | "error";
+  startedAt: number;
+  result?: OsintResult;
+  error?: string;
+}
+const osintJobs = new Map<string, OsintJob>();
+/** Drop jobs older than 15 minutes so the map can't grow unbounded. */
+function sweepOsintJobs(): void {
+  const cutoff = Date.now() - 15 * 60_000;
+  for (const [id, job] of osintJobs) if (job.startedAt < cutoff) osintJobs.delete(id);
+}
+
 export function buildServer() {
   // Screenshots are base64 → allow a generous body limit.
   const app = Fastify({ logger: false, bodyLimit: 25 * 1024 * 1024 });
@@ -76,6 +90,8 @@ export function buildServer() {
     return reply.send({ ok: true, result: outcome.result, degraded: outcome.degraded });
   });
 
+  // §7 OSINT is slow (multi-step tool-use). Run it as a background job and poll,
+  // so no single request stays open long enough to hit a proxy/gateway 504.
   app.post("/osint", async (req, reply) => {
     const parsed = SubjectHintSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -87,14 +103,27 @@ export function buildServer() {
     if (!hasAnthropicKey()) {
       return reply.code(503).send({ error: "no_api_key", message: "Set ANTHROPIC_API_KEY in .env to use §7." });
     }
-    try {
-      const ctx = toolContextFromEnv(makeWebSearch());
-      const tools = buildTools(ctx);
-      const result = await runOsint(parsed.data, tools, makeLoopCreateMessage());
-      return reply.send({ ok: true, result });
-    } catch (e) {
-      return reply.code(502).send({ error: `osint_error: ${(e as Error).message}` });
-    }
+    sweepOsintJobs();
+    const jobId = randomUUID();
+    osintJobs.set(jobId, { status: "running", startedAt: Date.now() });
+    void (async () => {
+      try {
+        const ctx = toolContextFromEnv(makeWebSearch());
+        const tools = buildTools(ctx);
+        const result = await runOsint(parsed.data, tools, makeLoopCreateMessage());
+        osintJobs.set(jobId, { status: "done", result, startedAt: Date.now() });
+      } catch (e) {
+        osintJobs.set(jobId, { status: "error", error: `osint_error: ${(e as Error).message}`, startedAt: Date.now() });
+      }
+    })();
+    return reply.send({ ok: true, jobId });
+  });
+
+  app.get<{ Params: { jobId: string } }>("/osint/:jobId", async (req, reply) => {
+    const job = osintJobs.get(req.params.jobId);
+    if (!job) return reply.code(404).send({ error: "job_not_found" });
+    // Terminal jobs are kept briefly (swept after 15 min) so a retry can re-read them.
+    return reply.send({ ok: true, status: job.status, result: job.result, error: job.error });
   });
 
   // §7.2/§5-1 — instant recall of a known subject (read happens BEFORE any query).

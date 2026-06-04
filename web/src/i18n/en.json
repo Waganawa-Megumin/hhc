@@ -50,8 +50,12 @@
     "concernHeading": "Edit states-of-concern list (comma-separated)"
   },
   "interpret": {
-    "heading": "AI interpret (optional)",
-    "intro": "Paste the DM / scout message / screenshots you received and the AI will suggest likely indicators. You make the final call.",
+    "heading": "Analyze (paste → automatic)",
+    "intro": "Paste the DM / scout message / screenshots and hit Analyze: the AI auto-ticks the matching indicators, and if it finds a company/name it auto-pulls category F (sanctions/lists) from public sources. You can review and adjust.",
+    "analyzeBtn": "Analyze (AI + OSINT)",
+    "phaseInterpret": "Interpreting…",
+    "phaseOsint": "Running OSINT… (up to a few min)",
+    "alsoOsint": "Also run OSINT",
     "consentTitle": "Consent before sending",
     "consentBody": "Pasted content is sent to the Anthropic API via your local backend. It is not persisted on the server. Redacting the other party's name and face is recommended.",
     "consentCheck": "I consent to the above and want to send",

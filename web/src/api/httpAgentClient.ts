@@ -162,10 +162,29 @@ export const httpAgentClient: AgentClient = {
     return parsed.data;
   },
 
+  // §7 runs as a background job; start it then poll so we never hold a long request.
   async runOsintAgent(hint: SubjectHint): Promise<OsintResult> {
-    const data = (await postJson("/api/osint", hint)) as { result?: unknown };
-    const parsed = OsintResultSchema.safeParse(data.result);
-    if (!parsed.success) throw new Error("invalid_osint_response");
-    return parsed.data;
+    const start = (await postJson("/api/osint", hint)) as { jobId?: string };
+    if (!start.jobId) throw new Error("osint_no_job");
+    const deadline = Date.now() + 5 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2500));
+      let res: Response;
+      try {
+        res = await fetch(`/api/osint/${start.jobId}`);
+      } catch {
+        continue;
+      }
+      if (res.status === 404) throw new Error("osint_job_lost");
+      if (!res.ok) continue;
+      const d = (await res.json().catch(() => ({}))) as { status?: string; result?: unknown; error?: string };
+      if (d.status === "done") {
+        const parsed = OsintResultSchema.safeParse(d.result);
+        if (!parsed.success) throw new Error("invalid_osint_response");
+        return parsed.data;
+      }
+      if (d.status === "error") throw new Error(d.error ?? "osint_error");
+    }
+    throw new Error("osint_timeout");
   },
 };

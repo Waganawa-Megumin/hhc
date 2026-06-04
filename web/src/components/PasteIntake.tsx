@@ -34,6 +34,8 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
   const [text, setText] = useState("");
   const [images, setImages] = useState<PastedImage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "interpret" | "osint">("idle");
+  const [withOsint, setWithOsint] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const backendReady = health?.ok === true;
@@ -59,20 +61,33 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
     e.target.value = "";
   }
 
-  async function runInterpret() {
+  async function runAnalyze() {
     setBusy(true);
     setError(null);
+    setPhase("interpret");
     try {
       const result = await httpAgentClient.analyzeApproach({
         text,
         images: images.map((i) => ({ mediaType: i.mediaType, dataBase64: i.dataBase64 })),
         consent: true,
       });
-      c.applyInterpretResult(result);
+      c.applyInterpretResult(result); // auto-ticks the matched indicators
+      const hint = result.subject_hint;
+      const hasId = !!(hint && (hint.company || hint.domain || hint.person));
+      if (withOsint && hasId) {
+        setPhase("osint");
+        try {
+          const osint = await httpAgentClient.runOsintAgent(hint);
+          c.applyOsintResult(osint); // auto-pulls + auto-applies F2/F3 (F1 stays for confirm)
+        } catch (e) {
+          setError(`OSINT: ${(e as Error).message}`);
+        }
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(false);
+      setPhase("idle");
     }
   }
 
@@ -106,13 +121,20 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
           {t("interpret.addImages")}
           <input type="file" accept="image/*" multiple hidden onChange={onPickFiles} disabled={!consented} />
         </label>
-        <span className="muted small">{t("interpret.pasteHint")}</span>
+        <label className="osint-toggle small">
+          <input type="checkbox" checked={withOsint} onChange={(e) => setWithOsint(e.target.checked)} disabled={busy} />
+          {t("interpret.alsoOsint")}
+        </label>
         <div className="spacer" />
         <button type="button" className="ghost" onClick={clearIntake} disabled={busy}>
           {t("interpret.clear")}
         </button>
-        <button type="button" className="primary" onClick={runInterpret} disabled={!canSend}>
-          {busy ? t("interpret.interpreting") : t("interpret.interpretBtn")}
+        <button type="button" className="primary" onClick={runAnalyze} disabled={!canSend}>
+          {busy
+            ? phase === "osint"
+              ? t("interpret.phaseOsint")
+              : t("interpret.phaseInterpret")
+            : t("interpret.analyzeBtn")}
         </button>
       </div>
 

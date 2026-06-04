@@ -26,6 +26,9 @@ export default defineConfig({
         target: process.env.HHC_AGENT_URL ?? "http://127.0.0.1:8787",
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ""),
+        // §6 interpret can take a while with screenshots; don't time it out early.
+        timeout: 180000,
+        proxyTimeout: 180000,
       },
     },
   },

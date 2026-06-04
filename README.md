@@ -85,7 +85,8 @@ env var the backend already reads.
    repository secret** (or your account **Settings ▸ Codespaces ▸ Secrets** to
    reuse across repos). Add:
    - `ANTHROPIC_API_KEY` — from <https://console.anthropic.com> (the API is
-     separate from a Claude.ai subscription). Required for §6/§7.
+     separate from a Claude.ai subscription). Required for §6/§7. *(A secret named
+     `HHC_KEY` is also accepted as an alias for this.)*
    - `HHC_DB_KEY` — any strong passphrase, *optional*, enables encrypted case
      history (§7.3).
    Make sure the secret's repository access includes this repo.

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ToolRun } from "@hhc/shared";
-import { env } from "../env";
+import { env, anthropicApiKey } from "../env";
 import type { ModelComplete } from "./interpret";
 import type { LoopCaller } from "./osintAgent";
 import { ok, errored } from "../tools/http";
@@ -8,7 +8,7 @@ import { ok, errored } from "../tools/http";
 let client: Anthropic | null = null;
 
 export function getAnthropic(): Anthropic {
-  if (!client) client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  if (!client) client = new Anthropic({ apiKey: anthropicApiKey() });
   return client;
 }
 

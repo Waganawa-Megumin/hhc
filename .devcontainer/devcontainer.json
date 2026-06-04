@@ -19,7 +19,10 @@
   // are injected as environment variables automatically — no .env needed.
   "secrets": {
     "ANTHROPIC_API_KEY": {
-      "description": "Anthropic API key for §6 interpret and §7 OSINT (from console.anthropic.com). Without it, Layer-1 still works."
+      "description": "Anthropic API key for §6 interpret and §7 OSINT (from console.anthropic.com). Without it, Layer-1 still works. (A secret named HHC_KEY is also accepted as an alias.)"
+    },
+    "HHC_KEY": {
+      "description": "Alias for ANTHROPIC_API_KEY — use this OR ANTHROPIC_API_KEY, not both."
     },
     "HHC_DB_KEY": {
       "description": "Passphrase for the encrypted local case DB (§7.3). Optional; leave unset to disable case history."

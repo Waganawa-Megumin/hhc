@@ -20,6 +20,8 @@ for (const candidate of [resolve(process.cwd(), ".env"), resolve(here, "../../.e
 
 const EnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().default(""),
+  // Accepted alias for the Anthropic key (e.g. a Codespaces secret named HHC_KEY).
+  HHC_KEY: z.string().default(""),
   HHC_MODEL: z.string().default("claude-sonnet-4-6"),
   HHC_AGENT_PORT: z.coerce.number().int().positive().default(8787),
   HHC_OFFLINE: z.string().default("0"),
@@ -36,4 +38,7 @@ const EnvSchema = z.object({
 export const env = EnvSchema.parse(process.env);
 
 export const isOffline = (): boolean => env.HHC_OFFLINE === "1";
-export const hasAnthropicKey = (): boolean => env.ANTHROPIC_API_KEY.trim().length > 0;
+
+/** Resolve the Anthropic key, accepting HHC_KEY as an alias of ANTHROPIC_API_KEY. */
+export const anthropicApiKey = (): string => env.ANTHROPIC_API_KEY.trim() || env.HHC_KEY.trim();
+export const hasAnthropicKey = (): boolean => anthropicApiKey().length > 0;

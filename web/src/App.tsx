@@ -8,6 +8,7 @@ import { PasteIntake } from "./components/PasteIntake";
 import { OsintPanel } from "./components/OsintPanel";
 import { KnownSubjectBadge } from "./components/KnownSubjectBadge";
 import { CaseHistoryPanel } from "./components/CaseHistoryPanel";
+import { ReportDraft } from "./components/ReportDraft";
 import { useChecklist } from "./state/useChecklist";
 import { useOnline } from "./state/useOffline";
 import { getAgentHealth, type AgentHealth } from "./api/httpAgentClient";
@@ -58,6 +59,7 @@ export default function App() {
           <KnownSubjectBadge c={c} health={health} />
           <ScorePanel result={c.result} />
           <ActionPanel band={c.result.band} />
+          <ReportDraft c={c} />
         </aside>
       </main>
     </div>

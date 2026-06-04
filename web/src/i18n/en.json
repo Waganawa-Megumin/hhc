@@ -108,5 +108,13 @@
     "summary": "{{total}} inquiries / {{subjects}} unique / {{repeat}} repeat contacts",
     "bands": "Band distribution — low {{low}} · mid {{mid}} · high {{high}}",
     "topTtp": "Frequent TTPs"
+  },
+  "report": {
+    "heading": "Report draft & evidence preservation",
+    "copy": "Copy draft",
+    "copied": "Copied",
+    "freeze": "Save evidence snapshot",
+    "frozen": "Frozen (SHA-256: {{hash}}…)",
+    "body": "Body"
   }
 }

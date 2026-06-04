@@ -108,5 +108,13 @@
     "summary": "総問い合わせ {{total}} 件 / ユニーク {{subjects}} / 再接触 {{repeat}}",
     "bands": "帯域分布 — 低{{low}} 中{{mid}} 高{{high}}",
     "topTtp": "頻出TTP"
+  },
+  "report": {
+    "heading": "通報ドラフト・証拠保全",
+    "copy": "下書きをコピー",
+    "copied": "コピーしました",
+    "freeze": "証拠スナップショットを保存",
+    "frozen": "凍結しました（SHA-256: {{hash}}…）",
+    "body": "本文"
   }
 }

@@ -29,13 +29,15 @@ guidance.
 
 ## Status
 
+All phases implemented (≈80 tests, all run with no network and no API key).
+
 | Phase | Scope | State |
 |------|-------|-------|
-| **A** | Layer-1: A–F checklist, deterministic §3 scoring + critical-flag overrides, bands + 4R actions, JA/EN, offline | ✅ implemented |
-| B | §6 AI interpret (pasted text / screenshots → checklist prefill) | ⏳ planned |
-| C | §7 OSINT verification agent + tool registry (RDAP, crt.sh, OpenSanctions, Trade.gov CSL, …) | ⏳ planned |
-| D | Encrypted local case DB, smart cache, diff, stats | ⏳ planned |
-| E | Evidence snapshots, report drafts, calibration, CI | ⏳ planned |
+| **A** | Layer-1: A–F checklist, deterministic §3 scoring + critical-flag overrides, bands + 4R actions, JA/EN, offline | ✅ |
+| **B** | §6 AI interpret (pasted text / screenshots → human-confirmed checklist prefill) | ✅ |
+| **C** | §7 OSINT verification agent + tool registry (RDAP, crt.sh, OpenSanctions incl. METI, Trade.gov CSL, NTA 法人番号, gBizINFO, OpenCorporates, reverse-image links, web search) | ✅ |
+| **D** | Encrypted local case DB (SQLCipher), identity/clustering, volatility cache, diff, threat stats incl. coordinated-targeting | ✅ |
+| **E** | Evidence snapshots (timestamp+SHA-256), CSIRT/authority report drafts, calibration + acceptance tests, CI | ✅ |
 
 ## Architecture
 
@@ -51,26 +53,64 @@ A local-first monorepo (npm workspaces):
   runs §6/§7 and the encrypted case DB. Never part of the static front end.
 - **`data/`** — *(Phase D+)* gitignored encrypted case DB + OSINT cache.
 
-## Quickstart (Layer-1)
+## Quickstart (Layer-1, keyless)
 
 Requires Node 20+ (tested on Node 22).
 
 ```bash
 npm install
-npm test            # 25 deterministic tests, no network, no API key
+npm test            # ~80 deterministic tests, no network, no API key
 npm run typecheck
 npm run dev:web     # open the printed localhost URL
 npm run build       # production build of the Layer-1 UI
 ```
 
-Layer-1 needs **no API key and no network**. Copy `.env.example` to `.env` only
-when you start using the keyed agent backend in later phases (never commit `.env`).
+Layer-1 needs **no API key and no network**: tick the checklist, get a band +
+recommended action, copy a report draft, and freeze a SHA-256 evidence snapshot.
+
+## Full local run (§6 interpret, §7 OSINT, case history)
+
+```bash
+cp .env.example .env          # then set ANTHROPIC_API_KEY and HHC_DB_KEY
+npm run seed                  # (optional) seed sample case history for the demo
+npm run dev:agent             # local backend on 127.0.0.1:8787 (holds your key)
+npm run dev:web               # the UI proxies /api → the agent
+```
+
+- **§6** turns a pasted DM / screenshot into *suggested* checklist ticks (you
+  confirm each). Consent-gated; nothing is persisted server-side.
+- **§7** corroborates a subject from public sources and screens the recruiter
+  **and the affiliated employer/university/institute** against danger lists;
+  matches are candidates that score **only after you confirm identity**.
+- **Case history** (needs `HHC_DB_KEY`) gives instant recall of repeat
+  approaches, diffs on re-checks, and a personal threat-landscape view including
+  coordinated-targeting alerts. Stored encrypted under `data/` (gitignored).
+
+Every OSINT source degrades gracefully: if a credential is missing or
+`HHC_OFFLINE=1`, that tool reports *unavailable* (and "absence ≠ innocence")
+instead of failing the run. Free source registrations (NTA app ID, Trade.gov,
+OpenSanctions/OpenCorporates) are listed in `.env.example`; the keyless paths
+(RDAP, crt.sh, self-hosted OpenSanctions, reverse-image links) work immediately.
 
 ## Privacy & security
 
 - Layer-1 runs entirely on your device and sends nothing.
-- API keys live only in `.env` (gitignored) and are used only by the agent backend.
-- The case DB and OSINT cache live under `data/` (gitignored) and are encrypted.
+- API keys live only in `.env` (gitignored) and are used only by the agent backend,
+  which binds `127.0.0.1`.
+- The case DB and OSINT cache live under `data/` (gitignored) and are encrypted
+  (SQLCipher; wrong key is rejected, file is opaque at rest).
+- Guardrails are enforced in code and covered by tests: no nationality/ethnicity in
+  scoring or storage, no "spy" labelling, deterministic score always overrides AI,
+  sanctions/watchlist hits are human-confirmed candidates, "no evidence ≠ innocence".
+
+### Known dev-dependency advisories
+
+`npm audit` reports advisories in the **dev** toolchain (esbuild/vite dev server,
+and a critical in `vitest` that applies **only when the Vitest UI server is
+running** — `vitest --ui`, which this project never uses; CI runs `vitest run`).
+None affect the shipped web bundle or the agent backend. Clearing them requires a
+vite 8 + vitest 4 major upgrade; tracked separately to avoid destabilising the
+build.
 
 ## License
 

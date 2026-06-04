@@ -180,3 +180,9 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .save-result { margin-top: 0.5rem; }
 .stats { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
 .stats p { margin: 0.25rem 0; }
+
+/* §5-6/5-7 report draft + evidence snapshot */
+.report-draft { border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.9rem; background: var(--panel); }
+.report-draft summary { cursor: pointer; font-weight: 600; }
+.report-actions { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+.report-body { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }

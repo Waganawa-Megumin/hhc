@@ -1,6 +1,6 @@
 import { useState, type ClipboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { ConsentGate } from "./ConsentGate";
+import { SendDisclosure } from "./ConsentGate";
 import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
@@ -30,7 +30,6 @@ function readImageFile(file: File): Promise<PastedImage> {
 
 export function PasteIntake({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
   const { t } = useTranslation();
-  const [consented, setConsented] = useState(false);
   const [text, setText] = useState("");
   const [images, setImages] = useState<PastedImage[]>([]);
   const [busy, setBusy] = useState(false);
@@ -41,7 +40,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
   const backendReady = health?.ok === true;
   const offline = health?.offline === true;
   const noKey = health ? health.anthropicKey === false : false;
-  const canSend = consented && backendReady && !offline && !noKey && !busy && (text.trim().length > 0 || images.length > 0);
+  const canSend = backendReady && !offline && !noKey && !busy && (text.trim().length > 0 || images.length > 0);
 
   async function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
     const files = Array.from(e.clipboardData.items)
@@ -105,8 +104,6 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       </div>
       <p className="muted">{t("interpret.intro")}</p>
 
-      <ConsentGate consented={consented} onChange={setConsented} />
-
       <textarea
         className="intake-text"
         rows={5}
@@ -114,12 +111,11 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
         value={text}
         onChange={(e) => setText(e.target.value)}
         onPaste={onPaste}
-        disabled={!consented}
       />
       <div className="intake-actions">
         <label className="ghost file-btn">
           {t("interpret.addImages")}
-          <input type="file" accept="image/*" multiple hidden onChange={onPickFiles} disabled={!consented} />
+          <input type="file" accept="image/*" multiple hidden onChange={onPickFiles} />
         </label>
         <label className="osint-toggle small">
           <input type="checkbox" checked={withOsint} onChange={(e) => setWithOsint(e.target.checked)} disabled={busy} />
@@ -137,6 +133,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
             : t("interpret.analyzeBtn")}
         </button>
       </div>
+      <SendDisclosure />
 
       {images.length > 0 ? (
         <div className="thumbs">

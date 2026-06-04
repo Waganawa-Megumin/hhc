@@ -6,11 +6,13 @@
   "description": "HHC keyed backend (local, 127.0.0.1): §6 AI interpret and (later) §7 OSINT agent + encrypted case DB. Holds the Anthropic API key; never part of the static front end.",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts"
+    "start": "tsx src/server.ts",
+    "seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
     "@hhc/shared": "*",
+    "better-sqlite3-multiple-ciphers": "^12.10.0",
     "fastify": "^5.8.0",
     "zod": "^3.24.1"
   },

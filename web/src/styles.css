@@ -166,3 +166,17 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .run-ok { color: #74d99f; }
 .run-unavailable, .run-error { color: var(--mid); }
 .run-no_match { color: var(--muted); }
+
+/* §5-1 known-subject recall */
+.known-badge { border: 1px solid rgba(110,168,254,0.35); background: rgba(110,168,254,0.08); border-radius: 10px; padding: 0.6rem 0.8rem; }
+.recall-line { margin: 0; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+.recall-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.recall-suggest { margin: 0.3rem 0 0; font-size: 0.86rem; color: var(--muted); }
+
+/* §7.3/7.6 case history + stats */
+.case-history { border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem 1rem; background: var(--panel); }
+.case-history h2 { margin-top: 0; }
+.theme-input { flex: 1; min-width: 160px; }
+.save-result { margin-top: 0.5rem; }
+.stats { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
+.stats p { margin: 0.25rem 0; }

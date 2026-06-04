@@ -89,5 +89,24 @@
     "unavailable": "利用できなかったソース: {{sources}}（証拠なし＝無実ではありません）",
     "toolRuns": "ツール実行ログ（{{count}}件）",
     "notesForUser": "メモ"
+  },
+  "recall": {
+    "heading": "既知の相手",
+    "seen": "この相手は過去{{count}}回。前回判定: {{band}}（{{date}}）",
+    "possibleSameActor": "同一アクターの可能性",
+    "confirmManually": "自動統合はしません。確認はあなたが行います"
+  },
+  "history": {
+    "heading": "案件履歴（暗号化・自分用）",
+    "privacy": "自分の端末に暗号化保存されます。第三者を告発・共有するためのものではありません。国籍・民族は保存しません。",
+    "themePlaceholder": "探られたテーマ（任意・例: 半導体輸出規制）",
+    "save": "この判定を履歴に保存",
+    "saving": "保存中…",
+    "savedFirst": "保存しました（この相手は{{count}}回目・初回）。",
+    "savedDiff": "保存しました（{{count}}回目）。新規指標: {{added}}・スコア差分: {{delta}}",
+    "coordinated": "協調的標的化の疑い: 短期間に{{n}}件の別アクターが同種テーマ（{{theme}}）を探っています。",
+    "summary": "総問い合わせ {{total}} 件 / ユニーク {{subjects}} / 再接触 {{repeat}}",
+    "bands": "帯域分布 — 低{{low}} 中{{mid}} 高{{high}}",
+    "topTtp": "頻出TTP"
   }
 }

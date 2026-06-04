@@ -89,5 +89,24 @@
     "unavailable": "Unavailable sources: {{sources}} (no evidence ≠ innocence)",
     "toolRuns": "Tool run log ({{count}})",
     "notesForUser": "Notes"
+  },
+  "recall": {
+    "heading": "Known subject",
+    "seen": "Seen {{count}}× before. Last band: {{band}} ({{date}})",
+    "possibleSameActor": "Possible same actor",
+    "confirmManually": "not auto-merged; you confirm"
+  },
+  "history": {
+    "heading": "Case history (encrypted, personal)",
+    "privacy": "Stored encrypted on your device. Not for accusing or sharing about third parties. Nationality/ethnicity are never stored.",
+    "themePlaceholder": "Probed theme (optional, e.g. semiconductor export controls)",
+    "save": "Save this assessment to history",
+    "saving": "Saving…",
+    "savedFirst": "Saved (1st time for this subject; total {{count}}).",
+    "savedDiff": "Saved (contact #{{count}}). New indicators: {{added}}; score delta: {{delta}}",
+    "coordinated": "Possible coordinated targeting: {{n}} distinct actors probed the same theme ({{theme}}) in a short window.",
+    "summary": "{{total}} inquiries / {{subjects}} unique / {{repeat}} repeat contacts",
+    "bands": "Band distribution — low {{low}} · mid {{mid}} · high {{high}}",
+    "topTtp": "Frequent TTPs"
   }
 }

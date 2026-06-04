@@ -6,3 +6,8 @@ export * from "./scoring";
 export * from "./guardrails";
 export * from "./schema";
 export * from "./i18n-keys";
+export * from "./fuzzy";
+export * from "./fingerprint";
+export * from "./ttl";
+export * from "./diff";
+export * from "./stats";

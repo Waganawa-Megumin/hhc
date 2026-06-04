@@ -1,11 +1,34 @@
 import Fastify from "fastify";
 import { z } from "zod";
-import { SubjectHintSchema } from "@hhc/shared";
+import { SubjectHintSchema, computeStats } from "@hhc/shared";
 import { env, hasAnthropicKey, isOffline } from "./env";
 import { interpret, type InterpretRequest } from "./anthropic/interpret";
 import { runOsint } from "./anthropic/osintAgent";
 import { makeModelComplete, makeLoopCreateMessage, makeWebSearch } from "./anthropic/client";
 import { buildTools, toolContextFromEnv } from "./tools/registry";
+import { getDb, isDbEnabled } from "./db/db";
+import { recall, recordInquiry, getStatsRows } from "./db/store";
+
+const IdentifiersSchema = z
+  .object({
+    company: z.string().optional(),
+    domain: z.string().optional(),
+    person: z.string().optional(),
+    handle: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .strip();
+
+const InquiryBodySchema = z.object({
+  identifiers: IdentifiersSchema,
+  score: z.number(),
+  band: z.enum(["low", "mid", "high"]),
+  matchedIndicatorIds: z.array(z.string()).default([]),
+  theme: z.string().optional(),
+  evidenceKeys: z.array(z.string()).optional(),
+  inputFingerprint: z.string().optional(),
+});
 
 const InterpretBodySchema = z.object({
   text: z.string().default(""),
@@ -26,6 +49,7 @@ export function buildServer() {
     model: env.HHC_MODEL,
     offline: isOffline(),
     anthropicKey: hasAnthropicKey(),
+    caseDb: isDbEnabled(),
   }));
 
   app.post("/interpret", async (req, reply) => {
@@ -70,6 +94,37 @@ export function buildServer() {
     } catch (e) {
       return reply.code(502).send({ error: `osint_error: ${(e as Error).message}` });
     }
+  });
+
+  // §7.2/§5-1 — instant recall of a known subject (read happens BEFORE any query).
+  app.post("/subject/recall", async (req, reply) => {
+    const parsed = IdentifiersSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    if (!isDbEnabled()) {
+      return reply.send({ ok: true, enabled: false, known: false, subject: null, clusterSuggestions: [] });
+    }
+    return reply.send({ ok: true, enabled: true, ...recall(getDb(), parsed.data) });
+  });
+
+  // §7.3/§7.5 — record an assessment into the encrypted case history; returns the diff.
+  app.post("/inquiry", async (req, reply) => {
+    const parsed = InquiryBodySchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
+    if (!isDbEnabled()) {
+      return reply.code(503).send({ error: "db_disabled", message: "Set HHC_DB_KEY to enable case history." });
+    }
+    try {
+      return reply.send({ ok: true, ...recordInquiry(getDb(), parsed.data) });
+    } catch (e) {
+      return reply.code(500).send({ error: (e as Error).message });
+    }
+  });
+
+  // §7.6 — personal threat-landscape statistics.
+  app.get("/stats", async (_req, reply) => {
+    if (!isDbEnabled()) return reply.send({ ok: true, enabled: false });
+    const { inquiries, subjects } = getStatsRows(getDb());
+    return reply.send({ ok: true, enabled: true, stats: computeStats(inquiries, subjects) });
   });
 
   return app;

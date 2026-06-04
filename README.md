@@ -92,14 +92,18 @@ env var the backend already reads.
 2. **Create the Codespace**: repo → **Code ▸ Codespaces ▸ Create codespace** on
    `claude/festive-babbage-JiOcC` (or your branch). It runs `npm install`
    automatically.
-3. **Start it** in the Codespace terminal:
-   ```bash
-   npm run seed   # optional: sample case history for the demo (needs HHC_DB_KEY)
-   npm run dev    # starts the agent (127.0.0.1:8787) + web (5173) together
-   ```
-4. Port **5173** auto-forwards and opens a preview — that's the UI. The web proxies
-   `/api` to the in-container agent, so your key stays server-side and port 8787 is
-   never exposed.
+3. **It auto-starts.** A VS Code task (`HHC dev`) launches the agent + web when the
+   Codespace opens — no terminal needed. (If prompted, allow automatic tasks. To
+   run it by hand instead: `npm run dev`. For sample case history first, run
+   `npm run seed` once.)
+4. Port **5173** auto-forwards and the **UI opens in your browser** — that's the
+   whole app. The web proxies `/api` to the in-container agent, so your key stays
+   server-side and port 8787 is never exposed.
+
+> **Browser-based, with a tiny local backend.** The Layer-1 checklist is pure
+> browser. §6/§7 and the encrypted case DB run in a small backend *inside the same
+> Codespace* because an API key must never live in browser/static code (§9) — in
+> Codespaces it auto-starts and you only ever interact with the browser tab.
 
 > Secrets are injected at container start. If you add/clip a secret to an existing
 > Codespace, run **“Codespaces: Rebuild Container”** (or restart it) so the new

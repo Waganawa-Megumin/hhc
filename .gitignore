@@ -20,6 +20,8 @@ data/
 
 # Editor / OS
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.log

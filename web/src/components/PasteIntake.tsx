@@ -11,21 +11,55 @@ interface PastedImage {
   previewUrl: string;
 }
 
-function readImageFile(file: File): Promise<PastedImage> {
+// Anthropic rejects images whose dimensions exceed 8000px and downsamples
+// anything over ~1568px on the long edge anyway, so resize client-side to a safe
+// long edge before sending. Avoids "image dimensions exceed max allowed size".
+const MAX_EDGE = 1568;
+
+function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result);
-      const comma = dataUrl.indexOf(",");
-      resolve({
-        mediaType: file.type || "image/png",
-        dataBase64: comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl,
-        previewUrl: dataUrl,
-      });
-    };
+    reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("image decode failed"));
+    img.src = dataUrl;
+  });
+}
+
+async function readImageFile(file: File): Promise<PastedImage> {
+  const original = await fileToDataUrl(file);
+  try {
+    const img = await loadImage(original);
+    const longest = Math.max(img.naturalWidth, img.naturalHeight);
+    const scale = Math.min(1, MAX_EDGE / (longest || 1));
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("no canvas context");
+    ctx.drawImage(img, 0, 0, w, h);
+    const out = canvas.toDataURL("image/jpeg", 0.85);
+    const comma = out.indexOf(",");
+    return { mediaType: "image/jpeg", dataBase64: comma >= 0 ? out.slice(comma + 1) : out, previewUrl: out };
+  } catch {
+    // Fallback: send the original if canvas processing fails.
+    const comma = original.indexOf(",");
+    return {
+      mediaType: file.type || "image/png",
+      dataBase64: comma >= 0 ? original.slice(comma + 1) : original,
+      previewUrl: original,
+    };
+  }
 }
 
 export function PasteIntake({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {

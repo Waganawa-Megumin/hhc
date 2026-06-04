@@ -92,7 +92,38 @@ export async function runOsint(
     messages.push({ role: "user", content: toolResults });
   }
 
+  // Deterministic watchlist screening: always run every F source against the
+  // company and person (not dependent on whether the model chose to call them),
+  // so each source's result is reliable and visible to the user.
+  toolRuns.push(...(await screenWatchlists(tools, hint)));
+
   return finalizeOsint(hint, lastText, toolRuns, tools);
+}
+
+const F_SCREENING_TOOLS = ["sanctions_opensanctions", "enduser_jp_meti", "screening_us_csl"];
+
+async function screenWatchlists(tools: OsintTool[], hint: SubjectHint): Promise<ToolRun[]> {
+  const byName = new Map(tools.map((t) => [t.name, t]));
+  const names = [hint.company, hint.person].map((s) => s?.trim()).filter((s): s is string => !!s);
+  if (names.length === 0) return [];
+  const jobs: Promise<ToolRun>[] = [];
+  for (const toolName of F_SCREENING_TOOLS) {
+    const tool = byName.get(toolName);
+    if (!tool) continue;
+    for (const name of names) {
+      jobs.push(
+        (async () => {
+          try {
+            const run = await tool.run({ name });
+            return { ...run, citation: `${run.citation ?? toolName} — "${name}"` };
+          } catch (e) {
+            return errored(toolName, `"${name}": ${(e as Error).message}`);
+          }
+        })(),
+      );
+    }
+  }
+  return Promise.all(jobs);
 }
 
 function mergeHint(model: SubjectHint | undefined, fallback: SubjectHint): SubjectHint {
@@ -126,12 +157,19 @@ export function finalizeOsint(
           "OSINTエージェントの最終出力を解釈できませんでした。 / Could not parse the OSINT agent's final output.",
       };
 
-  // Deterministic watchlist candidates from tool data (never from the model).
+  // Deterministic watchlist candidates from tool data (never from the model),
+  // de-duplicated across the agent's calls and the deterministic screening pass.
   const candidates: WatchlistCandidate[] = [];
+  const seen = new Set<string>();
   for (const r of toolRuns) {
     const data = r.data as { candidates?: WatchlistCandidate[] } | undefined;
     if (data && Array.isArray(data.candidates)) {
-      for (const c of data.candidates) candidates.push({ ...c, pending_human_confirmation: true });
+      for (const c of data.candidates) {
+        const key = `${c.list}|${c.matched_entity}|${c.query}`.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        candidates.push({ ...c, pending_human_confirmation: true });
+      }
     }
   }
 

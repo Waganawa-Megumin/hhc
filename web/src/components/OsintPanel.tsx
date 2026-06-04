@@ -139,17 +139,35 @@ function OsintResults({ c }: { c: ChecklistController }) {
 
       {r.notes_for_user ? <p className="osint-notes">{r.notes_for_user}</p> : null}
 
-      <details className="tool-runs">
-        <summary>{t("osint.toolRuns", { count: r.tool_runs.length })}</summary>
+      <div className="source-results">
+        <h3>{t("osint.sourcesHeading", { count: r.tool_runs.length })}</h3>
         <ul>
-          {r.tool_runs.map((tr, i) => (
-            <li key={i} className={`run-${tr.status}`}>
-              <span className="ind-id">{tr.tool}</span> {tr.status}
-              {tr.citation ? <span className="muted small"> · {tr.citation}</span> : null}
-            </li>
-          ))}
+          {r.tool_runs.map((tr, i) => {
+            const cands = (tr.data as { candidates?: unknown[] } | undefined)?.candidates?.length ?? 0;
+            const status =
+              tr.status === "ok"
+                ? cands > 0
+                  ? t("osint.statusHits", { n: cands })
+                  : t("osint.statusOk")
+                : tr.status === "no_match"
+                  ? t("osint.statusNoMatch")
+                  : tr.status === "unavailable"
+                    ? t("osint.statusUnavailable")
+                    : t("osint.statusError");
+            return (
+              <li key={i} className={`src-line run-${tr.status}`}>
+                <span className="src-dot" />
+                <span className="src-name">{tr.tool}</span>
+                <span className="src-status">{status}</span>
+                {tr.citation ? <span className="muted small src-cite">{tr.citation}</span> : null}
+                {tr.note && (tr.status === "unavailable" || tr.status === "error") ? (
+                  <span className="muted small">— {tr.note}</span>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
-      </details>
+      </div>
     </div>
   );
 }

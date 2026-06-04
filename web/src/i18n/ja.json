@@ -94,7 +94,12 @@
     "evidenceHeading": "根拠（出典付き）",
     "sourceLink": "出典",
     "unavailable": "利用できなかったソース: {{sources}}（証拠なし＝無実ではありません）",
-    "toolRuns": "ツール実行ログ（{{count}}件）",
+    "sourcesHeading": "ソース別チェック結果（{{count}}件）",
+    "statusOk": "取得OK",
+    "statusHits": "{{n}}件の候補",
+    "statusNoMatch": "該当なし",
+    "statusUnavailable": "利用不可",
+    "statusError": "エラー",
     "notesForUser": "メモ"
   },
   "recall": {

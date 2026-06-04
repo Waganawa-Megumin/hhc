@@ -75,6 +75,36 @@ describe("§7 OSINT loop", () => {
     expect(JSON.stringify(result)).not.toMatch(/\bspy\b/i);
   });
 
+  it("deterministically screens F sources even if the model calls no tools", async () => {
+    const tools: OsintTool[] = [
+      fakeTool("sanctions_opensanctions", async (input) =>
+        ok("sanctions_opensanctions", {
+          candidates: [
+            {
+              list: "us_ofac_sdn",
+              matched_entity: "ACME SANCTIONED LLC",
+              query: String(input.name ?? ""),
+              score: 0.91,
+              maps_to: "F1",
+              pending_human_confirmation: false,
+            },
+          ],
+        }),
+      ),
+      fakeTool("enduser_jp_meti", async () => unavailable("enduser_jp_meti"), false),
+    ];
+    // Model immediately returns final JSON without calling any tool.
+    const call: LoopCaller = async () => ({
+      stop_reason: "end_turn",
+      content: [{ type: "text", text: JSON.stringify({ subject_hint: {}, matched_indicators: [], notes_for_user: "" }) }],
+    });
+    const result = await runOsint({ company: "Acme Advisory", domain: "", person: "", title: "" }, tools, call);
+    // The sanctions source was screened deterministically and its result is visible.
+    expect(result.tool_runs.some((r) => r.tool === "sanctions_opensanctions")).toBe(true);
+    expect(result.watchlist_candidates).toHaveLength(1);
+    expect(result.unavailable_sources).toContain("enduser_jp_meti");
+  });
+
   it("finalizeOsint never lets the model inject watchlist candidates (deterministic from tools)", () => {
     const out = finalizeOsint(
       hint,

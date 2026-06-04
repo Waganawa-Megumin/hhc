@@ -94,7 +94,12 @@
     "evidenceHeading": "Evidence (with sources)",
     "sourceLink": "source",
     "unavailable": "Unavailable sources: {{sources}} (no evidence ≠ innocence)",
-    "toolRuns": "Tool run log ({{count}})",
+    "sourcesHeading": "Per-source results ({{count}})",
+    "statusOk": "fetched OK",
+    "statusHits": "{{n}} candidate(s)",
+    "statusNoMatch": "no match",
+    "statusUnavailable": "unavailable",
+    "statusError": "error",
     "notesForUser": "Notes"
   },
   "recall": {

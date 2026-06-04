@@ -92,37 +92,51 @@ export async function runOsint(
     messages.push({ role: "user", content: toolResults });
   }
 
-  // Deterministic watchlist screening: always run every F source against the
-  // company and person (not dependent on whether the model chose to call them),
-  // so each source's result is reliable and visible to the user.
-  toolRuns.push(...(await screenWatchlists(tools, hint)));
+  // Deterministic screening: always run every list/registry source (not dependent
+  // on whether the model chose to call them), so each source's result is reliable
+  // and visible. F sources run vs company + person; corporate-existence sources
+  // (A5) run vs company; domain sources vs the domain.
+  toolRuns.push(...(await deterministicScreen(tools, hint)));
 
   return finalizeOsint(hint, lastText, toolRuns, tools);
 }
 
+// Run vs company + person (produce watchlist candidates).
 const F_SCREENING_TOOLS = ["sanctions_opensanctions", "enduser_jp_meti", "screening_us_csl"];
+// Run vs company name (corporate existence, A5 — visibility only, no auto-tick:
+// absence from a registry is a weak signal, not proof of a fake).
+const CORP_SCREENING_TOOLS = ["corp_jp", "corp_jp_aux", "corp_global"];
+// Run vs domain (A2 — visibility only).
+const DOMAIN_SCREENING_TOOLS = ["domain_rdap", "cert_ct"];
 
-async function screenWatchlists(tools: OsintTool[], hint: SubjectHint): Promise<ToolRun[]> {
+async function deterministicScreen(tools: OsintTool[], hint: SubjectHint): Promise<ToolRun[]> {
   const byName = new Map(tools.map((t) => [t.name, t]));
-  const names = [hint.company, hint.person].map((s) => s?.trim()).filter((s): s is string => !!s);
-  if (names.length === 0) return [];
+  const company = hint.company?.trim();
+  const person = hint.person?.trim();
+  const domain = hint.domain?.trim();
   const jobs: Promise<ToolRun>[] = [];
-  for (const toolName of F_SCREENING_TOOLS) {
+
+  const run = (toolName: string, arg: Record<string, unknown>, label: string) => {
     const tool = byName.get(toolName);
-    if (!tool) continue;
-    for (const name of names) {
-      jobs.push(
-        (async () => {
-          try {
-            const run = await tool.run({ name });
-            return { ...run, citation: `${run.citation ?? toolName} — "${name}"` };
-          } catch (e) {
-            return errored(toolName, `"${name}": ${(e as Error).message}`);
-          }
-        })(),
-      );
-    }
+    if (!tool) return;
+    jobs.push(
+      (async () => {
+        try {
+          const r = await tool.run(arg);
+          return { ...r, citation: `${r.citation ?? toolName} — "${label}"` };
+        } catch (e) {
+          return errored(toolName, `"${label}": ${(e as Error).message}`);
+        }
+      })(),
+    );
+  };
+
+  for (const name of [company, person].filter((s): s is string => !!s)) {
+    for (const t of F_SCREENING_TOOLS) run(t, { name }, name);
   }
+  if (company) for (const t of CORP_SCREENING_TOOLS) run(t, { name: company }, company);
+  if (domain) for (const t of DOMAIN_SCREENING_TOOLS) run(t, { domain }, domain);
+
   return Promise.all(jobs);
 }
 

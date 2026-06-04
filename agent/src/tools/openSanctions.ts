@@ -50,14 +50,18 @@ export function makeOpenSanctionsTool(
       if (!name) return errored(opts.name, "missing name");
       const schema = String(input.schema ?? "LegalEntity");
 
-      const url =
-        `${base.replace(/\/$/, "")}/match/${encodeURIComponent(opts.dataset)}` +
-        (ctx.openSanctionsApiKey ? `?api_key=${encodeURIComponent(ctx.openSanctionsApiKey)}` : "");
+      const url = `${base.replace(/\/$/, "")}/match/${encodeURIComponent(opts.dataset)}`;
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      // OpenSanctions hosted API: standard header auth (also send the query param for compat).
+      const authedUrl = ctx.openSanctionsApiKey
+        ? `${url}?api_key=${encodeURIComponent(ctx.openSanctionsApiKey)}`
+        : url;
+      if (ctx.openSanctionsApiKey) headers["Authorization"] = `ApiKey ${ctx.openSanctionsApiKey}`;
       const res = await fetchJson(
-        url,
+        authedUrl,
         {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers,
           body: JSON.stringify({ queries: { q1: { schema, properties: { name: [name] } } } }),
         },
         9000,

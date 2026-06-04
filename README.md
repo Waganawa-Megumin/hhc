@@ -74,6 +74,37 @@ npm run build       # production build of the Layer-1 UI
 Layer-1 needs **no API key and no network**: tick the checklist, get a band +
 recommended action, copy a report draft, and freeze a SHA-256 evidence snapshot.
 
+## Run in GitHub Codespaces (browser, keys in Secrets)
+
+Run the whole thing from a browser with your API key stored as a **Codespaces
+secret** — never in the repo or on disk. The devcontainer maps the secret to the
+env var the backend already reads.
+
+1. **Add the secrets** (do this *before* creating the Codespace):
+   GitHub → this repo → **Settings ▸ Secrets and variables ▸ Codespaces ▸ New
+   repository secret** (or your account **Settings ▸ Codespaces ▸ Secrets** to
+   reuse across repos). Add:
+   - `ANTHROPIC_API_KEY` — from <https://console.anthropic.com> (the API is
+     separate from a Claude.ai subscription). Required for §6/§7.
+   - `HHC_DB_KEY` — any strong passphrase, *optional*, enables encrypted case
+     history (§7.3).
+   Make sure the secret's repository access includes this repo.
+2. **Create the Codespace**: repo → **Code ▸ Codespaces ▸ Create codespace** on
+   `claude/festive-babbage-JiOcC` (or your branch). It runs `npm install`
+   automatically.
+3. **Start it** in the Codespace terminal:
+   ```bash
+   npm run seed   # optional: sample case history for the demo (needs HHC_DB_KEY)
+   npm run dev    # starts the agent (127.0.0.1:8787) + web (5173) together
+   ```
+4. Port **5173** auto-forwards and opens a preview — that's the UI. The web proxies
+   `/api` to the in-container agent, so your key stays server-side and port 8787 is
+   never exposed.
+
+> Secrets are injected at container start. If you add/clip a secret to an existing
+> Codespace, run **“Codespaces: Rebuild Container”** (or restart it) so the new
+> value is picked up. The in-app status badge shows whether the key was detected.
+
 ## Full local run (§6 interpret, §7 OSINT, case history)
 
 ```bash

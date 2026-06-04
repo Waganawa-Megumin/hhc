@@ -1,0 +1,34 @@
+{
+  "name": "HHC (Human Hunter Check)",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+
+  // Install workspace deps when the Codespace is created (builds the native
+  // SQLCipher driver if no prebuild is available — the image has the toolchain).
+  "postCreateCommand": "npm install",
+
+  // Only the web UI is forwarded. The agent backend (port 8787) holds your API
+  // key and binds 127.0.0.1; the web dev server reaches it via an in-container
+  // proxy, so it is never exposed publicly.
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": { "label": "HHC web (Layer-1 UI)", "onAutoForward": "openPreview" },
+    "8787": { "label": "HHC agent backend (internal)", "onAutoForward": "ignore" }
+  },
+
+  // Documents the Codespaces secrets to create. When granted to this repo they
+  // are injected as environment variables automatically — no .env needed.
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for §6 interpret and §7 OSINT (from console.anthropic.com). Without it, Layer-1 still works."
+    },
+    "HHC_DB_KEY": {
+      "description": "Passphrase for the encrypted local case DB (§7.3). Optional; leave unset to disable case history."
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["esbenp.prettier-vscode"]
+    }
+  }
+}

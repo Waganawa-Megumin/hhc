@@ -16,6 +16,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
+    // Bind all interfaces so GitHub Codespaces / devcontainers can forward the
+    // port. The web layer is keyless; the agent backend stays on 127.0.0.1.
+    host: true,
     // Proxy agent calls to the local backend so the browser never needs CORS and
     // the API key stays server-side. The agent binds 127.0.0.1:8787 by default.
     proxy: {

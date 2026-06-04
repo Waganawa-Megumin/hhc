@@ -15,11 +15,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "npm run build --workspace web",
+    "dev": "concurrently -k -n agent,web -c blue,green \"npm:dev:agent\" \"npm:dev:web\"",
     "dev:web": "npm run dev --workspace web",
     "dev:agent": "npm run dev --workspace agent",
     "seed": "npm run seed --workspace agent"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }

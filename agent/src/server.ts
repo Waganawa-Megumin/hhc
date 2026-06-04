@@ -135,7 +135,7 @@ async function main() {
   try {
     await app.listen({ host: "127.0.0.1", port: env.HHC_AGENT_PORT });
     console.log(
-      `[hhc-agent] http://127.0.0.1:${env.HHC_AGENT_PORT}  model=${env.HHC_MODEL} offline=${isOffline()} key=${hasAnthropicKey()}`,
+      `[hhc-agent] http://127.0.0.1:${env.HHC_AGENT_PORT}  model=${env.HHC_MODEL} offline=${isOffline()} key=${hasAnthropicKey()} caseDb=${isDbEnabled()}`,
     );
   } catch (err) {
     console.error(err);

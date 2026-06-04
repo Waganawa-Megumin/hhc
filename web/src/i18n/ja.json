@@ -110,7 +110,11 @@
     "coordinated": "協調的標的化の疑い: 短期間に{{n}}件の別アクターが同種テーマ（{{theme}}）を探っています。",
     "summary": "総問い合わせ {{total}} 件 / ユニーク {{subjects}} / 再接触 {{repeat}}",
     "bands": "帯域分布 — 低{{low}} 中{{mid}} 高{{high}}",
-    "topTtp": "頻出TTP"
+    "topTtp": "頻出TTP",
+    "export": "暗号化エクスポート（.age）",
+    "import": "インポート（.age）",
+    "exported": "暗号化エクスポートをダウンロードしました（HHC_DB_KEYで復号できます）。",
+    "imported": "インポート完了: subjects {{s}} / inquiries {{i}} をマージしました。"
   },
   "report": {
     "heading": "通報ドラフト・証拠保全",

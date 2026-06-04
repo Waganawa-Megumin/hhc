@@ -111,6 +111,30 @@ export async function fetchStats(): Promise<{ enabled: boolean; stats?: unknown 
   }
 }
 
+export async function exportCase(): Promise<{ filename: string; data: string }> {
+  const res = await fetch("/api/export");
+  const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
+  return { filename: String(d.filename), data: String(d.data) };
+}
+
+export interface ImportResult {
+  subjects: number;
+  inquiries: number;
+  evidence_cache: number;
+}
+
+export async function importCase(data: string): Promise<ImportResult> {
+  const res = await fetch("/api/import", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ data }),
+  });
+  const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
+  return d as unknown as ImportResult;
+}
+
 async function postJson(path: string, body: unknown): Promise<unknown> {
   let res: Response;
   try {

@@ -1,12 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   recordInquiry,
   fetchStats,
+  exportCase,
+  importCase,
   type AgentHealth,
   type RecordInquiryResponse,
 } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
+
+function downloadText(filename: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface StatsShape {
   totalInquiries: number;
@@ -25,6 +36,7 @@ export function CaseHistoryPanel({ c, health }: { c: ChecklistController; health
   const [saved, setSaved] = useState<RecordInquiryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<StatsShape | null>(null);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
 
   const enabled = health?.caseDb === true;
 
@@ -64,6 +76,34 @@ export function CaseHistoryPanel({ c, health }: { c: ChecklistController; health
     }
   }
 
+  async function doExport() {
+    setBackupMsg(null);
+    setError(null);
+    try {
+      const { filename, data } = await exportCase();
+      downloadText(filename, data);
+      setBackupMsg(t("history.exported"));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function doImport(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBackupMsg(null);
+    setError(null);
+    try {
+      const text = await file.text();
+      const r = await importCase(text);
+      setBackupMsg(t("history.imported", { s: r.subjects, i: r.inquiries }));
+      await loadStats();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   return (
     <section className="case-history" aria-label={t("history.heading")}>
       <h2>{t("history.heading")}</h2>
@@ -82,6 +122,17 @@ export function CaseHistoryPanel({ c, health }: { c: ChecklistController; health
         </button>
       </div>
       {error ? <p className="warn small">{t("interpret.error", { msg: error })}</p> : null}
+
+      <div className="backup-row">
+        <button type="button" className="ghost" onClick={doExport}>
+          {t("history.export")}
+        </button>
+        <label className="ghost file-btn">
+          {t("history.import")}
+          <input type="file" accept=".age,text/plain" hidden onChange={doImport} />
+        </label>
+      </div>
+      {backupMsg ? <p className="muted small">{backupMsg}</p> : null}
 
       {saved ? (
         <div className="save-result">

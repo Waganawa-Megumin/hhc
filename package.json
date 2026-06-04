@@ -18,7 +18,9 @@
     "dev": "concurrently -k -n agent,web -c blue,green \"npm:dev:agent\" \"npm:dev:web\"",
     "dev:web": "npm run dev --workspace web",
     "dev:agent": "npm run dev --workspace agent",
-    "seed": "npm run seed --workspace agent"
+    "seed": "npm run seed --workspace agent",
+    "export": "npm run export --workspace agent --",
+    "import": "npm run import --workspace agent --"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

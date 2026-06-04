@@ -181,6 +181,7 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .case-history h2 { margin-top: 0; }
 .theme-input { flex: 1; min-width: 160px; }
 .save-result { margin-top: 0.5rem; }
+.backup-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
 .stats { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
 .stats p { margin: 0.25rem 0; }
 

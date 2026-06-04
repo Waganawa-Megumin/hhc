@@ -110,7 +110,11 @@
     "coordinated": "Possible coordinated targeting: {{n}} distinct actors probed the same theme ({{theme}}) in a short window.",
     "summary": "{{total}} inquiries / {{subjects}} unique / {{repeat}} repeat contacts",
     "bands": "Band distribution — low {{low}} · mid {{mid}} · high {{high}}",
-    "topTtp": "Frequent TTPs"
+    "topTtp": "Frequent TTPs",
+    "export": "Encrypted export (.age)",
+    "import": "Import (.age)",
+    "exported": "Downloaded the encrypted export (decryptable with HHC_DB_KEY).",
+    "imported": "Import complete: merged {{s}} subjects / {{i}} inquiries."
   },
   "report": {
     "heading": "Report draft & evidence preservation",

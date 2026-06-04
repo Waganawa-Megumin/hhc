@@ -8,6 +8,7 @@ import { makeModelComplete, makeLoopCreateMessage, makeWebSearch } from "./anthr
 import { buildTools, toolContextFromEnv } from "./tools/registry";
 import { getDb, isDbEnabled } from "./db/db";
 import { recall, recordInquiry, getStatsRows } from "./db/store";
+import { exportCaseArmored, importCaseArmored } from "./db/exportImport";
 
 const IdentifiersSchema = z
   .object({
@@ -125,6 +126,31 @@ export function buildServer() {
     if (!isDbEnabled()) return reply.send({ ok: true, enabled: false });
     const { inquiries, subjects } = getStatsRows(getDb());
     return reply.send({ ok: true, enabled: true, stats: computeStats(inquiries, subjects) });
+  });
+
+  // §9 — age-encrypted export of the whole case DB (survives outside the Codespace).
+  app.get("/export", async (_req, reply) => {
+    if (!isDbEnabled()) return reply.code(503).send({ error: "db_disabled" });
+    try {
+      const data = await exportCaseArmored(getDb(), env.HHC_DB_KEY);
+      const filename = `hhc-case-${new Date().toISOString().replace(/[:.]/g, "-")}.age`;
+      return reply.send({ ok: true, filename, data });
+    } catch (e) {
+      return reply.code(500).send({ error: (e as Error).message });
+    }
+  });
+
+  // §9 — import (merge) an age-encrypted export back in.
+  app.post("/import", async (req, reply) => {
+    const parsed = z.object({ data: z.string().min(1) }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    if (!isDbEnabled()) return reply.code(503).send({ error: "db_disabled" });
+    try {
+      const result = await importCaseArmored(getDb(), parsed.data.data, env.HHC_DB_KEY);
+      return reply.send({ ok: true, ...result });
+    } catch (e) {
+      return reply.code(400).send({ error: (e as Error).message });
+    }
   });
 
   return app;

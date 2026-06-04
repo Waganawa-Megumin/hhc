@@ -1,0 +1,49 @@
+{
+  "app": {
+    "title": "HHC — Human Hunter Check",
+    "subtitle": "求人・ヘッドハンティングを装った勧誘かを、自分で自己診断します",
+    "intro": "怪しいと感じた求人・スカウトの兆候をチェックすると、リスク帯域と推奨アクションを表示します。",
+    "disclaimer": "本ツールは断定しません。個人を「スパイ」と判定したり、有罪/無罪を決めたりはしません。出力はリスク帯域（低・中・高）と、あなたがとるべき行動の助言だけです。第1層はあなたの端末内で完結し、何も送信しません。"
+  },
+  "offline": {
+    "online": "オンライン",
+    "offline": "オフライン（第1層は問題なく動作します）"
+  },
+  "lang": {
+    "label": "言語",
+    "ja": "日本語",
+    "en": "English"
+  },
+  "checklist": {
+    "heading": "チェックリスト",
+    "coefficientsHeading": "あなたの属性（リスク係数）",
+    "reset": "リセット",
+    "selectedCount": "{{count}} 件選択中"
+  },
+  "score": {
+    "heading": "判定",
+    "raw": "スコア",
+    "band": "リスク帯域",
+    "bySourceScore": "スコアによる判定",
+    "bySourceOverride": "クリティカル指標による強制昇格",
+    "criticalFlags": "発動したクリティカル指標",
+    "breakdown": "内訳",
+    "none": "まだ何も選択されていません。",
+    "weightUnit": "点",
+    "uncounted": "非加点",
+    "coefficient": "係数"
+  },
+  "action": {
+    "heading": "推奨アクション"
+  },
+  "f": {
+    "heading": "制裁・ウォッチリスト合致（人間が確認）",
+    "confirmF1": "このリスト合致を人間として同定確認した（F1を加点し『高』へ強制昇格）",
+    "f1Pending": "候補：人間の同定確認が必要（未確認のため非加点）",
+    "f3Note": "弱い一致：参考表示のみ・スコアには加算しません"
+  },
+  "nationality": {
+    "heading": "国籍（任意・非加点の判断材料）",
+    "placeholder": "申告された国籍があれば入力（任意）"
+  }
+}

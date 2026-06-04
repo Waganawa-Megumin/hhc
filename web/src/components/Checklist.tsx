@@ -1,0 +1,161 @@
+import { useTranslation } from "react-i18next";
+import {
+  CATEGORIES,
+  indicatorsByCategory,
+  coefficientIndicators,
+  NATIONALITY_NOT_SCORED_NOTE,
+  type CategoryId,
+  type WatchlistIndicator,
+} from "@hhc/shared";
+import { useLang } from "../i18n";
+import type { ChecklistController, CoefficientId } from "../state/useChecklist";
+
+const WEIGHT_CATEGORIES: CategoryId[] = ["A", "B", "C", "D"];
+
+export function Checklist({ c }: { c: ChecklistController }) {
+  const { t } = useTranslation();
+  const lang = useLang();
+
+  return (
+    <section className="checklist" aria-label={t("checklist.heading")}>
+      <div className="section-head">
+        <h2>{t("checklist.heading")}</h2>
+        <div className="section-head-actions">
+          <span className="muted">{t("checklist.selectedCount", { count: c.selected.size })}</span>
+          <button type="button" className="ghost" onClick={c.reset}>
+            {t("checklist.reset")}
+          </button>
+        </div>
+      </div>
+
+      {WEIGHT_CATEGORIES.map((cat) => (
+        <fieldset key={cat} className="cat">
+          <legend>
+            <span className="cat-id">{cat}</span> {CATEGORIES[cat].label[lang]}
+          </legend>
+          {indicatorsByCategory(cat).map((ind) => (
+            <label key={ind.id} className="indicator">
+              <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
+              <span className="ind-body">
+                <span className="ind-label">
+                  <span className="ind-id">{ind.id}</span> {ind.label[lang]}
+                  {"critical" in ind && ind.critical ? <span className="crit-badge">★</span> : null}
+                  <span className="weight-chip">+{"weight" in ind ? ind.weight : 0}</span>
+                </span>
+                <span className="ind-desc">{ind.description[lang]}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      ))}
+
+      <FCategory c={c} />
+
+      <fieldset className="cat coeff">
+        <legend>
+          <span className="cat-id">E</span> {t("checklist.coefficientsHeading")}
+        </legend>
+        {coefficientIndicators().map((ind) => {
+          const id = ind.id as CoefficientId;
+          return (
+            <label key={ind.id} className="indicator">
+              <input type="checkbox" checked={c.coefficients[id]} onChange={() => c.toggleCoefficient(id)} />
+              <span className="ind-body">
+                <span className="ind-label">
+                  <span className="ind-id">{ind.id}</span> {ind.label[lang]}
+                  <span className="weight-chip coeff-chip">×{ind.coefficient}</span>
+                </span>
+                <span className="ind-desc">{ind.description[lang]}</span>
+              </span>
+            </label>
+          );
+        })}
+      </fieldset>
+
+      <NationalityContext c={c} />
+    </section>
+  );
+}
+
+function FCategory({ c }: { c: ChecklistController }) {
+  const { t } = useTranslation();
+  const lang = useLang();
+  const fIndicators = indicatorsByCategory("F") as WatchlistIndicator[];
+
+  return (
+    <fieldset className="cat f-cat">
+      <legend>
+        <span className="cat-id">F</span> {t("f.heading")}
+      </legend>
+      {fIndicators.map((ind) => {
+        if (ind.id === "F1") {
+          return (
+            <div key="F1" className="f1-block">
+              <div className="ind-label">
+                <span className="ind-id">F1</span> {ind.label[lang]}
+                <span className="crit-badge">★</span>
+                <span className="weight-chip">+{ind.weight}</span>
+              </div>
+              <p className="ind-desc">{ind.description[lang]}</p>
+              <label className="indicator confirm">
+                <input
+                  type="checkbox"
+                  checked={c.humanConfirmedF1}
+                  onChange={(e) => c.setHumanConfirmedF1(e.target.checked)}
+                />
+                <span className="ind-body">
+                  <span className="ind-label">{t("f.confirmF1")}</span>
+                  {!c.humanConfirmedF1 ? <span className="pending">{t("f.f1Pending")}</span> : null}
+                </span>
+              </label>
+            </div>
+          );
+        }
+        if (ind.flagOnly) {
+          return (
+            <label key={ind.id} className="indicator f3">
+              <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
+              <span className="ind-body">
+                <span className="ind-label">
+                  <span className="ind-id">{ind.id}</span> {ind.label[lang]}
+                  <span className="weight-chip zero">+0</span>
+                </span>
+                <span className="ind-desc">{t("f.f3Note")}</span>
+              </span>
+            </label>
+          );
+        }
+        return (
+          <label key={ind.id} className="indicator">
+            <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
+            <span className="ind-body">
+              <span className="ind-label">
+                <span className="ind-id">{ind.id}</span> {ind.label[lang]}
+                <span className="weight-chip">+{ind.weight}</span>
+              </span>
+              <span className="ind-desc">{ind.description[lang]}</span>
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
+  );
+}
+
+function NationalityContext({ c }: { c: ChecklistController }) {
+  const { t } = useTranslation();
+  const lang = useLang();
+  return (
+    <fieldset className="cat nationality">
+      <legend>{t("nationality.heading")}</legend>
+      <input
+        type="text"
+        className="nationality-input"
+        value={c.nationalityContext}
+        placeholder={t("nationality.placeholder")}
+        onChange={(e) => c.setNationalityContext(e.target.value)}
+      />
+      <p className="ind-desc note">{NATIONALITY_NOT_SCORED_NOTE[lang]}</p>
+    </fieldset>
+  );
+}

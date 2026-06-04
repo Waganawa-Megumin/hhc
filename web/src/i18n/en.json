@@ -1,0 +1,49 @@
+{
+  "app": {
+    "title": "HHC — Human Hunter Check",
+    "subtitle": "Self-triage whether a job/headhunting approach is a recruitment attempt",
+    "intro": "Tick the warning signs you noticed in a suspicious job or scout approach, and HHC shows a risk band and a recommended action.",
+    "disclaimer": "This tool makes no accusations. It does not label anyone a \"spy\" or decide guilt/innocence. The output is only a risk band (low/medium/high) and advice on what to do. Layer-1 runs entirely on your device and sends nothing."
+  },
+  "offline": {
+    "online": "Online",
+    "offline": "Offline (Layer-1 works fine)"
+  },
+  "lang": {
+    "label": "Language",
+    "ja": "日本語",
+    "en": "English"
+  },
+  "checklist": {
+    "heading": "Checklist",
+    "coefficientsHeading": "Your attributes (risk coefficients)",
+    "reset": "Reset",
+    "selectedCount": "{{count}} selected"
+  },
+  "score": {
+    "heading": "Result",
+    "raw": "Score",
+    "band": "Risk band",
+    "bySourceScore": "Determined by score",
+    "bySourceOverride": "Forced by a critical indicator",
+    "criticalFlags": "Critical indicators that fired",
+    "breakdown": "Breakdown",
+    "none": "Nothing selected yet.",
+    "weightUnit": "pts",
+    "uncounted": "not scored",
+    "coefficient": "coefficient"
+  },
+  "action": {
+    "heading": "Recommended action"
+  },
+  "f": {
+    "heading": "Sanctions / watchlist match (human-confirmed)",
+    "confirmF1": "I have confirmed this designation-list match as a human (adds F1 and forces the 'high' band)",
+    "f1Pending": "Candidate: needs human identity confirmation (not scored until confirmed)",
+    "f3Note": "Weak match: shown for reference only, never added to the score"
+  },
+  "nationality": {
+    "heading": "Nationality (optional, non-scored context)",
+    "placeholder": "Claimed nationality, if any (optional)"
+  }
+}

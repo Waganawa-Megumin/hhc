@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Secrets — never commit API keys
+.env
+.env.local
+.env.*.local
+
+# Encrypted case DB and OSINT evidence cache (§8/§9: never commit, may be sensitive)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.age
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.log

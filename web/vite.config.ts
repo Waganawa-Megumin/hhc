@@ -16,5 +16,14 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
+    // Proxy agent calls to the local backend so the browser never needs CORS and
+    // the API key stays server-side. The agent binds 127.0.0.1:8787 by default.
+    proxy: {
+      "/api": {
+        target: process.env.HHC_AGENT_URL ?? "http://127.0.0.1:8787",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api/, ""),
+      },
+    },
   },
 });

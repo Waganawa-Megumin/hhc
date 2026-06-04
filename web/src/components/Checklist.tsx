@@ -12,6 +12,21 @@ import type { ChecklistController, CoefficientId } from "../state/useChecklist";
 
 const WEIGHT_CATEGORIES: CategoryId[] = ["A", "B", "C", "D"];
 
+function SuggestionHint({ c, id }: { c: ChecklistController; id: string }) {
+  const { t } = useTranslation();
+  const s = c.suggestions[id];
+  if (!s) return null;
+  return (
+    <span className="ai-suggest">
+      <span className="ai-suggest-tag">{t("interpret.aiSuggest", { confidence: s.confidence })}</span> {s.rationale}
+    </span>
+  );
+}
+
+function rowClass(c: ChecklistController, id: string): string {
+  return c.suggestions[id] ? "indicator suggested" : "indicator";
+}
+
 export function Checklist({ c }: { c: ChecklistController }) {
   const { t } = useTranslation();
   const lang = useLang();
@@ -34,7 +49,7 @@ export function Checklist({ c }: { c: ChecklistController }) {
             <span className="cat-id">{cat}</span> {CATEGORIES[cat].label[lang]}
           </legend>
           {indicatorsByCategory(cat).map((ind) => (
-            <label key={ind.id} className="indicator">
+            <label key={ind.id} className={rowClass(c, ind.id)}>
               <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
               <span className="ind-body">
                 <span className="ind-label">
@@ -43,6 +58,7 @@ export function Checklist({ c }: { c: ChecklistController }) {
                   <span className="weight-chip">+{"weight" in ind ? ind.weight : 0}</span>
                 </span>
                 <span className="ind-desc">{ind.description[lang]}</span>
+                <SuggestionHint c={c} id={ind.id} />
               </span>
             </label>
           ))}
@@ -97,6 +113,7 @@ function FCategory({ c }: { c: ChecklistController }) {
                 <span className="weight-chip">+{ind.weight}</span>
               </div>
               <p className="ind-desc">{ind.description[lang]}</p>
+              <SuggestionHint c={c} id="F1" />
               <label className="indicator confirm">
                 <input
                   type="checkbox"
@@ -113,7 +130,7 @@ function FCategory({ c }: { c: ChecklistController }) {
         }
         if (ind.flagOnly) {
           return (
-            <label key={ind.id} className="indicator f3">
+            <label key={ind.id} className={`${rowClass(c, ind.id)} f3`}>
               <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
               <span className="ind-body">
                 <span className="ind-label">
@@ -121,12 +138,13 @@ function FCategory({ c }: { c: ChecklistController }) {
                   <span className="weight-chip zero">+0</span>
                 </span>
                 <span className="ind-desc">{t("f.f3Note")}</span>
+                <SuggestionHint c={c} id={ind.id} />
               </span>
             </label>
           );
         }
         return (
-          <label key={ind.id} className="indicator">
+          <label key={ind.id} className={rowClass(c, ind.id)}>
             <input type="checkbox" checked={c.selected.has(ind.id)} onChange={() => c.toggle(ind.id)} />
             <span className="ind-body">
               <span className="ind-label">
@@ -134,6 +152,7 @@ function FCategory({ c }: { c: ChecklistController }) {
                 <span className="weight-chip">+{ind.weight}</span>
               </span>
               <span className="ind-desc">{ind.description[lang]}</span>
+              <SuggestionHint c={c} id={ind.id} />
             </span>
           </label>
         );

@@ -1,15 +1,29 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Checklist } from "./components/Checklist";
 import { ScorePanel } from "./components/ScorePanel";
 import { ActionPanel } from "./components/ActionPanel";
 import { LanguageToggle } from "./components/LanguageToggle";
+import { PasteIntake } from "./components/PasteIntake";
 import { useChecklist } from "./state/useChecklist";
 import { useOnline } from "./state/useOffline";
+import { getAgentHealth, type AgentHealth } from "./api/httpAgentClient";
 
 export default function App() {
   const { t } = useTranslation();
   const c = useChecklist();
   const online = useOnline();
+  const [health, setHealth] = useState<AgentHealth | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void getAgentHealth().then((h) => {
+      if (alive) setHealth(h);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="app">
@@ -31,7 +45,10 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <Checklist c={c} />
+        <div className="left-col">
+          <PasteIntake c={c} health={health} />
+          <Checklist c={c} />
+        </div>
         <aside className="results">
           <ScorePanel result={c.result} />
           <ActionPanel band={c.result.band} />

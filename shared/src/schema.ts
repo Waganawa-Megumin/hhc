@@ -90,10 +90,10 @@ export type OsintResult = z.infer<typeof OsintResultSchema>;
  * Returns a discriminated result rather than throwing, so callers degrade
  * gracefully on model drift.
  */
-export function parseModelJson<T>(
+export function parseModelJson<S extends z.ZodTypeAny>(
   raw: string,
-  schema: z.ZodType<T>,
-): { ok: true; value: T } | { ok: false; error: string } {
+  schema: S,
+): { ok: true; value: z.infer<S> } | { ok: false; error: string } {
   const stripped = stripCodeFences(raw).trim();
   let parsed: unknown;
   try {
@@ -105,7 +105,7 @@ export function parseModelJson<T>(
   if (!result.success) {
     return { ok: false, error: result.error.message };
   }
-  return { ok: true, value: result.data };
+  return { ok: true, value: result.data as z.infer<S> };
 }
 
 /** Remove a leading/trailing ``` or ```json fence the model may have added anyway. */

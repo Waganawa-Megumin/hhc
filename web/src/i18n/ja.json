@@ -45,5 +45,25 @@
   "nationality": {
     "heading": "国籍（任意・非加点の判断材料）",
     "placeholder": "申告された国籍があれば入力（任意）"
+  },
+  "interpret": {
+    "heading": "AI解釈（任意）",
+    "intro": "受け取ったDMやスカウト文面・スクリーンショットを貼り付けると、AIが該当しそうな指標を提案します。最終判断はあなたが行います。",
+    "consentTitle": "送信前の同意",
+    "consentBody": "貼り付けた内容は、あなたのローカル・バックエンド経由でAnthropic APIに送信されます。サーバーには保存しません。相手の氏名・顔は伏せ字にすることを推奨します。",
+    "consentCheck": "上記に同意して送信する",
+    "textareaPlaceholder": "DM・メール・求人文面をここに貼り付け（スクリーンショットはこの欄に貼り付け）",
+    "addImages": "画像を追加",
+    "pasteHint": "スクリーンショットは欄内に直接ペーストできます（最大8枚）",
+    "clear": "クリア",
+    "interpretBtn": "AIで解釈",
+    "interpreting": "解釈中…",
+    "backendUnavailable": "バックエンド未起動",
+    "backendOffline": "オフラインモード（HHC_OFFLINE=1）のため§6は利用できません。",
+    "noKey": "ANTHROPIC_API_KEY が未設定のため§6は利用できません（.env を設定）。",
+    "error": "エラー: {{msg}}",
+    "aiTag": "AIによる提案（参考）— 確定はあなたがチェックして行います",
+    "aiSuggest": "AI提案・確信度{{confidence}}：",
+    "suggestedBandHint": "AIの目安帯域: {{band}}（参考。実際のスコアは決定論エンジンが算出）"
   }
 }

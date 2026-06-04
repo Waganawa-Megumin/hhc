@@ -7,14 +7,17 @@
   "license": "SEE LICENSE — personal, non-commercial use",
   "workspaces": [
     "shared",
-    "web"
+    "web",
+    "agent"
   ],
   "scripts": {
-    "typecheck": "tsc -p shared/tsconfig.json && tsc -p web/tsconfig.json",
+    "typecheck": "tsc -p shared/tsconfig.json && tsc -p web/tsconfig.json && tsc -p agent/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "npm run build --workspace web",
-    "dev:web": "npm run dev --workspace web"
+    "dev:web": "npm run dev --workspace web",
+    "dev:agent": "npm run dev --workspace agent",
+    "seed": "npm run seed --workspace agent"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

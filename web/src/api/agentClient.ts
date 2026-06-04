@@ -2,10 +2,16 @@
 // (§6 interpret / §7 OSINT), added in later phases. Layer-1 never requires it.
 import type { InterpretResult, OsintResult, SubjectHint } from "@hhc/shared";
 
+export interface InterpretImage {
+  /** e.g. "image/png" */
+  mediaType: string;
+  /** base64 (no data: prefix) of a pasted screenshot. */
+  dataBase64: string;
+}
+
 export interface InterpretRequest {
   text: string;
-  /** base64 image data URLs of pasted screenshots. */
-  images: string[];
+  images: InterpretImage[];
   /** Explicit consent to send to the model (§6 consent gate). */
   consent: boolean;
 }

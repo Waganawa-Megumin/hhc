@@ -45,5 +45,25 @@
   "nationality": {
     "heading": "Nationality (optional, non-scored context)",
     "placeholder": "Claimed nationality, if any (optional)"
+  },
+  "interpret": {
+    "heading": "AI interpret (optional)",
+    "intro": "Paste the DM / scout message / screenshots you received and the AI will suggest likely indicators. You make the final call.",
+    "consentTitle": "Consent before sending",
+    "consentBody": "Pasted content is sent to the Anthropic API via your local backend. It is not persisted on the server. Redacting the other party's name and face is recommended.",
+    "consentCheck": "I consent to the above and want to send",
+    "textareaPlaceholder": "Paste the DM / email / job text here (paste screenshots into this box too)",
+    "addImages": "Add images",
+    "pasteHint": "You can paste screenshots directly into the box (up to 8)",
+    "clear": "Clear",
+    "interpretBtn": "Interpret with AI",
+    "interpreting": "Interpreting…",
+    "backendUnavailable": "Backend not running",
+    "backendOffline": "Offline mode (HHC_OFFLINE=1); §6 is unavailable.",
+    "noKey": "ANTHROPIC_API_KEY is not set; §6 is unavailable (configure .env).",
+    "error": "Error: {{msg}}",
+    "aiTag": "AI suggestions (for reference) — you confirm by ticking the boxes",
+    "aiSuggest": "AI suggestion · {{confidence}} confidence:",
+    "suggestedBandHint": "AI's rough band: {{band}} (reference only; the deterministic engine sets the real score)"
   }
 }

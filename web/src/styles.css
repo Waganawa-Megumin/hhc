@@ -113,3 +113,33 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .action-panel h2 { margin-top: 0; }
 .action-4r { font-weight: 700; font-size: 1.05rem; margin: 0.2rem 0; }
 .action-detail { margin: 0.2rem 0 0; color: var(--text); }
+
+.left-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* §6 interpret panel */
+.intake { border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem 1rem; background: var(--panel); }
+.intake .muted { font-size: 0.9rem; }
+.consent-gate { border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.8rem; margin: 0.5rem 0 0.75rem; background: var(--panel-2); }
+.consent-title { font-weight: 700; margin: 0 0 0.25rem; }
+.consent-body { margin: 0; color: var(--muted); font-size: 0.86rem; }
+.intake-text { width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.6rem 0.7rem; font-family: inherit; resize: vertical; }
+.intake-text:disabled { opacity: 0.5; }
+.intake-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.intake-actions .spacer { flex: 1; }
+.small { font-size: 0.78rem; }
+.file-btn { cursor: pointer; }
+.primary { background: var(--accent); color: #0b0e1a; border: 0; border-radius: 6px; padding: 0.4rem 0.9rem; font-weight: 700; cursor: pointer; }
+.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.thumb { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.warn { color: var(--mid); font-size: 0.88rem; margin: 0.5rem 0 0; }
+
+.ai-notes { margin-top: 0.8rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
+.ai-tag { font-size: 0.78rem; color: var(--accent); font-weight: 700; margin: 0 0 0.3rem; }
+.subject-hint { font-weight: 600; margin: 0 0 0.3rem; }
+.ai-notes ul { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--muted); }
+
+/* AI suggestion on an indicator row */
+.indicator.suggested { background: rgba(110,168,254,0.08); border: 1px solid rgba(110,168,254,0.3); }
+.ai-suggest { display: block; font-size: 0.82rem; color: var(--accent); margin-top: 0.2rem; }
+.ai-suggest-tag { font-weight: 700; }

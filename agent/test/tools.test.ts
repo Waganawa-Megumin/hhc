@@ -4,6 +4,7 @@ import { makeCertCtTool } from "../src/tools/certCt";
 import { makeOpenSanctionsTool } from "../src/tools/openSanctions";
 import { makeScreeningUsCslTool } from "../src/tools/screeningUsCsl";
 import { makeReverseImageTool } from "../src/tools/reverseImageLinks";
+import { makeCorpGleifTool } from "../src/tools/corpGleif";
 import { makeWebSearchTool } from "../src/tools/webSearch";
 import type { ToolContext } from "../src/tools/types";
 
@@ -124,6 +125,32 @@ describe("reverse_image (B1) — links only, always available", () => {
     const data = run.data as { links: Record<string, string>; note: string };
     expect(Object.keys(data.links)).toContain("tineye");
     expect(data.note).toMatch(/does not perform automated face matching/i);
+  });
+});
+
+describe("corp_gleif (A5, keyless)", () => {
+  it("parses GLEIF lei-records into companies", async () => {
+    mockFetch({
+      data: [
+        { id: "LEI123", attributes: { entity: { legalName: { name: "Acme Holdings" }, legalAddress: { country: "JP" }, status: "ACTIVE" } } },
+      ],
+    });
+    const tool = makeCorpGleifTool(ctx());
+    expect(tool.available).toBe(true);
+    const run = await tool.run({ name: "Acme Holdings" });
+    expect(run.status).toBe("ok");
+    const companies = (run.data as { companies: Array<{ lei: string }> }).companies;
+    expect(companies[0]?.lei).toBe("LEI123");
+  });
+
+  it("empty result → no_match", async () => {
+    mockFetch({ data: [] });
+    const run = await makeCorpGleifTool(ctx()).run({ name: "Nonexistent" });
+    expect(run.status).toBe("no_match");
+  });
+
+  it("offline → unavailable", async () => {
+    expect((await makeCorpGleifTool(ctx({ offline: true })).run({ name: "X" })).status).toBe("unavailable");
   });
 });
 

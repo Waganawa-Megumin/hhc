@@ -6,6 +6,7 @@ import { makeCertCtTool } from "./certCt";
 import { makeCorpJpTool } from "./corpJp";
 import { makeCorpJpAuxTool } from "./corpJpAux";
 import { makeCorpGlobalTool } from "./corpGlobal";
+import { makeCorpGleifTool } from "./corpGleif";
 import { makeOpenSanctionsTool } from "./openSanctions";
 import { makeScreeningUsCslTool } from "./screeningUsCsl";
 import { makeReverseImageTool } from "./reverseImageLinks";
@@ -32,6 +33,7 @@ export function buildTools(ctx: ToolContext): OsintTool[] {
     makeCertCtTool(ctx),
     makeCorpJpTool(ctx),
     makeCorpJpAuxTool(ctx),
+    makeCorpGleifTool(ctx),
     makeCorpGlobalTool(ctx),
     makeOpenSanctionsTool(ctx, {
       name: "sanctions_opensanctions",

@@ -105,7 +105,7 @@ export async function runOsint(
 const F_SCREENING_TOOLS = ["sanctions_opensanctions", "enduser_jp_meti", "screening_us_csl"];
 // Run vs company name (corporate existence, A5 — visibility only, no auto-tick:
 // absence from a registry is a weak signal, not proof of a fake).
-const CORP_SCREENING_TOOLS = ["corp_jp", "corp_jp_aux", "corp_global"];
+const CORP_SCREENING_TOOLS = ["corp_jp", "corp_jp_aux", "corp_gleif", "corp_global"];
 // Run vs domain (A2 — visibility only).
 const DOMAIN_SCREENING_TOOLS = ["domain_rdap", "cert_ct"];
 

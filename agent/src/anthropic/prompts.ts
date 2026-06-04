@@ -48,7 +48,7 @@ Indicators you may map evidence to (ids only):
 ${indicatorCatalog()}
 
 How to work:
-- Plan, then call the available tools. Use domain_rdap/cert_ct for A2, web_search for A1/A3/B3, corp_jp/corp_jp_aux/corp_global for A5, sanctions_opensanctions/enduser_jp_meti/screening_us_csl for category F (also run sanctions_opensanctions on the AFFILIATED employer/university/research-institute name), reverse_image for B1 (links only).
+- Plan, then call the available tools. Use domain_rdap/cert_ct for A2, web_search for A1/A3/B3, corp_jp/corp_jp_aux/corp_gleif/corp_global for A5, sanctions_opensanctions/enduser_jp_meti/screening_us_csl for category F (also run sanctions_opensanctions on the AFFILIATED employer/university/research-institute name), reverse_image for B1 (links only).
 - Some tools may be UNAVAILABLE (missing credential or offline). That is fine — note the gap. "No evidence" is NOT evidence of innocence; absence from a list NEVER lowers risk.
 - Cite a source_url for every concrete claim. Do not fabricate. Only map an indicator when a tool result supports it.
 

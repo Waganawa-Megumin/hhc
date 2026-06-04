@@ -1,8 +1,11 @@
 import Fastify from "fastify";
 import { z } from "zod";
+import { SubjectHintSchema } from "@hhc/shared";
 import { env, hasAnthropicKey, isOffline } from "./env";
 import { interpret, type InterpretRequest } from "./anthropic/interpret";
-import { makeModelComplete } from "./anthropic/client";
+import { runOsint } from "./anthropic/osintAgent";
+import { makeModelComplete, makeLoopCreateMessage, makeWebSearch } from "./anthropic/client";
+import { buildTools, toolContextFromEnv } from "./tools/registry";
 
 const InterpretBodySchema = z.object({
   text: z.string().default(""),
@@ -46,6 +49,27 @@ export function buildServer() {
       return reply.code(502).send({ error: outcome.error });
     }
     return reply.send({ ok: true, result: outcome.result, degraded: outcome.degraded });
+  });
+
+  app.post("/osint", async (req, reply) => {
+    const parsed = SubjectHintSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
+    }
+    if (isOffline()) {
+      return reply.code(503).send({ error: "offline", message: "HHC_OFFLINE=1; §7 needs network for the model." });
+    }
+    if (!hasAnthropicKey()) {
+      return reply.code(503).send({ error: "no_api_key", message: "Set ANTHROPIC_API_KEY in .env to use §7." });
+    }
+    try {
+      const ctx = toolContextFromEnv(makeWebSearch());
+      const tools = buildTools(ctx);
+      const result = await runOsint(parsed.data, tools, makeLoopCreateMessage());
+      return reply.send({ ok: true, result });
+    } catch (e) {
+      return reply.code(502).send({ error: `osint_error: ${(e as Error).message}` });
+    }
   });
 
   return app;

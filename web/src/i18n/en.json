@@ -65,5 +65,29 @@
     "aiTag": "AI suggestions (for reference) — you confirm by ticking the boxes",
     "aiSuggest": "AI suggestion · {{confidence}} confidence:",
     "suggestedBandHint": "AI's rough band: {{band}} (reference only; the deterministic engine sets the real score)"
+  },
+  "osint": {
+    "heading": "OSINT lookup (optional, public sources only)",
+    "intro": "Give a company / domain / name / title and HHC corroborates from public, lawful sources — including whether the affiliated employer/university/research institute matches a designation list. It never asserts identity or nationality.",
+    "field": {
+      "company": "Company",
+      "domain": "Domain",
+      "person": "Name",
+      "title": "Title / affiliation"
+    },
+    "publicOnly": "Public, lawful sources only (no LinkedIn scraping)",
+    "run": "Run OSINT lookup",
+    "running": "Looking up…",
+    "offline": "Offline mode; §7 is unavailable.",
+    "watchlistHeading": "Sanctions / watchlist candidates",
+    "watchlistNote": "Candidates only. Nothing scores until a human confirms identity. Transliteration / same-name hits are weak (F3).",
+    "confirmF1": "Confirm identity & add F1",
+    "f1Confirmed": "F1 confirmed",
+    "pending": "Awaiting human confirmation",
+    "evidenceHeading": "Evidence (with sources)",
+    "sourceLink": "source",
+    "unavailable": "Unavailable sources: {{sources}} (no evidence ≠ innocence)",
+    "toolRuns": "Tool run log ({{count}})",
+    "notesForUser": "Notes"
   }
 }

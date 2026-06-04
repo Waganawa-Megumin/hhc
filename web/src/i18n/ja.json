@@ -65,5 +65,29 @@
     "aiTag": "AIによる提案（参考）— 確定はあなたがチェックして行います",
     "aiSuggest": "AI提案・確信度{{confidence}}：",
     "suggestedBandHint": "AIの目安帯域: {{band}}（参考。実際のスコアは決定論エンジンが算出）"
+  },
+  "osint": {
+    "heading": "OSINT照会（任意・公開情報のみ）",
+    "intro": "会社名・ドメイン・氏名・肩書きを渡すと、公開・適法な情報源だけで裏取りします。所属する勤務先・大学・研究機関の指定リスト合致も確認します。身元・国籍は断定しません。",
+    "field": {
+      "company": "会社名",
+      "domain": "ドメイン",
+      "person": "氏名",
+      "title": "肩書き・所属"
+    },
+    "publicOnly": "公開・適法な情報源のみ（LinkedIn本体のスクレイピングはしません）",
+    "run": "OSINT照会を実行",
+    "running": "照会中…",
+    "offline": "オフラインモードのため§7は利用できません。",
+    "watchlistHeading": "制裁・ウォッチリスト候補",
+    "watchlistNote": "候補です。人間が同定を確認するまで加点しません。翻字・同名は弱い一致（F3）です。",
+    "confirmF1": "同定を確認してF1を加点",
+    "f1Confirmed": "F1確認済み",
+    "pending": "人間の確認待ち",
+    "evidenceHeading": "根拠（出典付き）",
+    "sourceLink": "出典",
+    "unavailable": "利用できなかったソース: {{sources}}（証拠なし＝無実ではありません）",
+    "toolRuns": "ツール実行ログ（{{count}}件）",
+    "notesForUser": "メモ"
   }
 }

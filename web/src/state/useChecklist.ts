@@ -3,6 +3,7 @@ import {
   scoreApproach,
   type ScoreResult,
   type InterpretResult,
+  type OsintResult,
   type IndicatorMatch,
   type SubjectHint,
   type Band,
@@ -26,12 +27,14 @@ export interface ChecklistController {
   suggestions: Record<string, IndicatorMatch>;
   subjectHint: SubjectHint | null;
   aiNotes: AiNotes | null;
+  osint: OsintResult | null;
   result: ScoreResult;
   toggle: (id: string) => void;
   toggleCoefficient: (id: CoefficientId) => void;
   setHumanConfirmedF1: (v: boolean) => void;
   setNationalityContext: (v: string) => void;
   applyInterpretResult: (r: InterpretResult) => void;
+  applyOsintResult: (r: OsintResult) => void;
   reset: () => void;
 }
 
@@ -43,6 +46,7 @@ export function useChecklist(): ChecklistController {
   const [suggestions, setSuggestions] = useState<Record<string, IndicatorMatch>>({});
   const [subjectHint, setSubjectHint] = useState<SubjectHint | null>(null);
   const [aiNotes, setAiNotes] = useState<AiNotes | null>(null);
+  const [osint, setOsint] = useState<OsintResult | null>(null);
 
   const toggle = useCallback((id: string) => {
     setSelected((prev) => {
@@ -57,13 +61,31 @@ export function useChecklist(): ChecklistController {
     setCoefficients((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const applyInterpretResult = useCallback((r: InterpretResult) => {
-    const map: Record<string, IndicatorMatch> = {};
-    for (const m of r.matched_indicators) map[m.id] = m;
-    setSuggestions(map);
-    setSubjectHint(r.subject_hint);
-    setAiNotes({ notes: r.notes_for_user, observations: r.free_observations, suggestedBand: r.suggested_band });
+  const mergeSuggestions = useCallback((matches: IndicatorMatch[]) => {
+    setSuggestions((prev) => {
+      const next = { ...prev };
+      for (const m of matches) next[m.id] = m;
+      return next;
+    });
   }, []);
+
+  const applyInterpretResult = useCallback(
+    (r: InterpretResult) => {
+      mergeSuggestions(r.matched_indicators);
+      setSubjectHint(r.subject_hint);
+      setAiNotes({ notes: r.notes_for_user, observations: r.free_observations, suggestedBand: r.suggested_band });
+    },
+    [mergeSuggestions],
+  );
+
+  const applyOsintResult = useCallback(
+    (r: OsintResult) => {
+      mergeSuggestions(r.matched_indicators);
+      setSubjectHint((prev) => ({ ...(prev ?? { company: "", domain: "", person: "", title: "" }), ...r.subject_hint }));
+      setOsint(r);
+    },
+    [mergeSuggestions],
+  );
 
   const reset = useCallback(() => {
     setSelected(new Set());
@@ -73,6 +95,7 @@ export function useChecklist(): ChecklistController {
     setSuggestions({});
     setSubjectHint(null);
     setAiNotes(null);
+    setOsint(null);
   }, []);
 
   // The authoritative score. nationalityContext and AI suggestions are intentionally
@@ -90,12 +113,14 @@ export function useChecklist(): ChecklistController {
     suggestions,
     subjectHint,
     aiNotes,
+    osint,
     result,
     toggle,
     toggleCoefficient,
     setHumanConfirmedF1,
     setNationalityContext,
     applyInterpretResult,
+    applyOsintResult,
     reset,
   };
 }

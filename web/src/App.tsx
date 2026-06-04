@@ -5,6 +5,7 @@ import { ScorePanel } from "./components/ScorePanel";
 import { ActionPanel } from "./components/ActionPanel";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { PasteIntake } from "./components/PasteIntake";
+import { OsintPanel } from "./components/OsintPanel";
 import { useChecklist } from "./state/useChecklist";
 import { useOnline } from "./state/useOffline";
 import { getAgentHealth, type AgentHealth } from "./api/httpAgentClient";
@@ -48,6 +49,7 @@ export default function App() {
         <div className="left-col">
           <PasteIntake c={c} health={health} />
           <Checklist c={c} />
+          <OsintPanel c={c} health={health} />
         </div>
         <aside className="results">
           <ScorePanel result={c.result} />

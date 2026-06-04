@@ -137,6 +137,7 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .primary:disabled { opacity: 0.45; cursor: not-allowed; }
 .thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
 .thumb { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.pdf-chip { width: auto; height: auto; display: inline-flex; align-items: center; padding: 0.35rem 0.6rem; font-size: 0.8rem; background: var(--panel-2); color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .warn { color: var(--mid); font-size: 0.88rem; margin: 0.5rem 0 0; }
 
 .ai-notes { margin-top: 0.8rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }

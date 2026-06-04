@@ -55,8 +55,8 @@ function sweepOsintJobs(): void {
 }
 
 export function buildServer() {
-  // Screenshots are base64 → allow a generous body limit.
-  const app = Fastify({ logger: false, bodyLimit: 25 * 1024 * 1024 });
+  // Screenshots / PDFs are base64 (≈ +33%) → allow a generous body limit.
+  const app = Fastify({ logger: false, bodyLimit: 60 * 1024 * 1024 });
 
   app.get("/health", async () => ({
     ok: true,

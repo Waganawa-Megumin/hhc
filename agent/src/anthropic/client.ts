@@ -23,16 +23,22 @@ export function makeModelComplete(): ModelComplete {
   return async ({ system, userText, images, maxTokens }) => {
     const content: Anthropic.ContentBlockParam[] = [];
     if (userText.trim()) content.push({ type: "text", text: userText });
-    for (const img of images) {
-      if (!ALLOWED_IMAGE_TYPES.has(img.mediaType)) continue;
-      content.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: img.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-          data: img.dataBase64,
-        },
-      });
+    for (const att of images) {
+      if (att.mediaType === "application/pdf") {
+        content.push({
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: att.dataBase64 },
+        });
+      } else if (ALLOWED_IMAGE_TYPES.has(att.mediaType)) {
+        content.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: att.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+            data: att.dataBase64,
+          },
+        });
+      }
     }
     if (content.length === 0) content.push({ type: "text", text: "(no content)" });
 

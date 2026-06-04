@@ -5,16 +5,19 @@ import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
 
-interface PastedImage {
+interface Attachment {
+  kind: "image" | "pdf";
   mediaType: string;
   dataBase64: string;
-  previewUrl: string;
+  previewUrl?: string;
+  name?: string;
 }
 
 // Anthropic rejects images whose dimensions exceed 8000px and downsamples
-// anything over ~1568px on the long edge anyway, so resize client-side to a safe
-// long edge before sending. Avoids "image dimensions exceed max allowed size".
+// anything over ~1568px on the long edge anyway, so resize images client-side to
+// a safe long edge before sending. PDFs are sent as-is (document blocks).
 const MAX_EDGE = 1568;
+const MAX_PDF_BYTES = 32 * 1024 * 1024; // Anthropic PDF size limit
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -34,7 +37,18 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-async function readImageFile(file: File): Promise<PastedImage> {
+function base64FromDataUrl(dataUrl: string): string {
+  const comma = dataUrl.indexOf(",");
+  return comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+}
+
+/** Read an image (downscaled) or a PDF (as-is). Returns null for an oversized PDF. */
+async function readAttachment(file: File): Promise<Attachment | null> {
+  if (file.type === "application/pdf") {
+    if (file.size > MAX_PDF_BYTES) return null;
+    const dataUrl = await fileToDataUrl(file);
+    return { kind: "pdf", mediaType: "application/pdf", dataBase64: base64FromDataUrl(dataUrl), name: file.name };
+  }
   const original = await fileToDataUrl(file);
   try {
     const img = await loadImage(original);
@@ -49,23 +63,16 @@ async function readImageFile(file: File): Promise<PastedImage> {
     if (!ctx) throw new Error("no canvas context");
     ctx.drawImage(img, 0, 0, w, h);
     const out = canvas.toDataURL("image/jpeg", 0.85);
-    const comma = out.indexOf(",");
-    return { mediaType: "image/jpeg", dataBase64: comma >= 0 ? out.slice(comma + 1) : out, previewUrl: out };
+    return { kind: "image", mediaType: "image/jpeg", dataBase64: base64FromDataUrl(out), previewUrl: out };
   } catch {
-    // Fallback: send the original if canvas processing fails.
-    const comma = original.indexOf(",");
-    return {
-      mediaType: file.type || "image/png",
-      dataBase64: comma >= 0 ? original.slice(comma + 1) : original,
-      previewUrl: original,
-    };
+    return { kind: "image", mediaType: file.type || "image/png", dataBase64: base64FromDataUrl(original), previewUrl: original };
   }
 }
 
 export function PasteIntake({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
-  const [images, setImages] = useState<PastedImage[]>([]);
+  const [images, setImages] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<"idle" | "interpret" | "osint">("idle");
   const [withOsint, setWithOsint] = useState(true);
@@ -78,19 +85,23 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
 
   async function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
     const files = Array.from(e.clipboardData.items)
-      .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
+      .filter((it) => it.kind === "file" && (it.type.startsWith("image/") || it.type === "application/pdf"))
       .map((it) => it.getAsFile())
       .filter((f): f is File => f !== null);
     if (files.length === 0) return;
     e.preventDefault();
-    const read = await Promise.all(files.map(readImageFile));
+    const read = (await Promise.all(files.map(readAttachment))).filter((a): a is Attachment => a !== null);
     setImages((prev) => [...prev, ...read].slice(0, 8));
   }
 
   async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/"));
-    const read = await Promise.all(files.map(readImageFile));
-    setImages((prev) => [...prev, ...read].slice(0, 8));
+    const files = Array.from(e.target.files ?? []).filter(
+      (f) => f.type.startsWith("image/") || f.type === "application/pdf",
+    );
+    const read = await Promise.all(files.map(readAttachment));
+    const ok = read.filter((a): a is Attachment => a !== null);
+    if (ok.length < files.length) setError(t("interpret.pdfTooLarge"));
+    setImages((prev) => [...prev, ...ok].slice(0, 8));
     e.target.value = "";
   }
 
@@ -149,7 +160,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       <div className="intake-actions">
         <label className="ghost file-btn">
           {t("interpret.addImages")}
-          <input type="file" accept="image/*" multiple hidden onChange={onPickFiles} />
+          <input type="file" accept="image/*,application/pdf" multiple hidden onChange={onPickFiles} />
         </label>
         <label className="osint-toggle small">
           <input type="checkbox" checked={withOsint} onChange={(e) => setWithOsint(e.target.checked)} disabled={busy} />
@@ -171,9 +182,15 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
 
       {images.length > 0 ? (
         <div className="thumbs">
-          {images.map((img, i) => (
-            <img key={i} src={img.previewUrl} alt={`pasted-${i}`} className="thumb" />
-          ))}
+          {images.map((att, i) =>
+            att.kind === "pdf" ? (
+              <span key={i} className="thumb pdf-chip" title={att.name}>
+                📄 {att.name ?? "PDF"}
+              </span>
+            ) : (
+              <img key={i} src={att.previewUrl} alt={`pasted-${i}`} className="thumb" />
+            ),
+          )}
         </div>
       ) : null}
 

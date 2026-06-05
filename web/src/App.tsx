@@ -6,6 +6,7 @@ import { ActionPanel } from "./components/ActionPanel";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { PasteIntake } from "./components/PasteIntake";
 import { OsintPanel } from "./components/OsintPanel";
+import { AboutPanel } from "./components/AboutPanel";
 import { KnownSubjectBadge } from "./components/KnownSubjectBadge";
 import { CaseHistoryPanel } from "./components/CaseHistoryPanel";
 import { ReportDraft } from "./components/ReportDraft";
@@ -18,6 +19,7 @@ export default function App() {
   const c = useChecklist();
   const online = useOnline();
   const [health, setHealth] = useState<AgentHealth | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -41,6 +43,9 @@ export default function App() {
             </div>
           </div>
           <div className="header-right">
+            <button type="button" className="ghost about-btn" onClick={() => setAboutOpen(true)}>
+              {t("about.button")}
+            </button>
             <span className={online ? "net-badge online" : "net-badge offline"}>
               {online ? t("offline.online") : t("offline.offline")}
             </span>
@@ -65,6 +70,8 @@ export default function App() {
           <ReportDraft c={c} />
         </aside>
       </main>
+
+      {aboutOpen ? <AboutPanel onClose={() => setAboutOpen(false)} /> : null}
     </div>
   );
 }

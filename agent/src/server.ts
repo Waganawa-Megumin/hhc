@@ -4,7 +4,7 @@ import { z } from "zod";
 import { SubjectHintSchema, computeStats, type OsintResult } from "@hhc/shared";
 import { env, hasAnthropicKey, isOffline } from "./env";
 import { interpret, type InterpretRequest } from "./anthropic/interpret";
-import { runOsint } from "./anthropic/osintAgent";
+import { runOsint, type OsintProgress } from "./anthropic/osintAgent";
 import { makeModelComplete, makeLoopCreateMessage, makeWebSearch } from "./anthropic/client";
 import { buildTools, toolContextFromEnv } from "./tools/registry";
 import { getDb, isDbEnabled } from "./db/db";
@@ -47,11 +47,14 @@ interface OsintJob {
   startedAt: number;
   result?: OsintResult;
   error?: string;
+  /** Live progress for the poller, so a long run shows "N sources checked". */
+  progress?: OsintProgress;
 }
 const osintJobs = new Map<string, OsintJob>();
-/** Drop jobs older than 15 minutes so the map can't grow unbounded. */
+/** Drop jobs older than 30 minutes so the map can't grow unbounded (kept well past
+ * the client poll deadline so a slow run's result is still retrievable). */
 function sweepOsintJobs(): void {
-  const cutoff = Date.now() - 15 * 60_000;
+  const cutoff = Date.now() - 30 * 60_000;
   for (const [id, job] of osintJobs) if (job.startedAt < cutoff) osintJobs.delete(id);
 }
 
@@ -107,14 +110,20 @@ export function buildServer() {
     sweepOsintJobs();
     const jobId = randomUUID();
     osintJobs.set(jobId, { status: "running", startedAt: Date.now() });
+    const startedAt = Date.now();
     void (async () => {
       try {
         const ctx = toolContextFromEnv(makeWebSearch());
         const tools = buildTools(ctx);
-        const result = await runOsint(parsed.data, tools, makeLoopCreateMessage());
-        osintJobs.set(jobId, { status: "done", result, startedAt: Date.now() });
+        const result = await runOsint(parsed.data, tools, makeLoopCreateMessage(), {
+          onProgress: (p) => {
+            const j = osintJobs.get(jobId);
+            if (j && j.status === "running") j.progress = p;
+          },
+        });
+        osintJobs.set(jobId, { status: "done", result, startedAt });
       } catch (e) {
-        osintJobs.set(jobId, { status: "error", error: `osint_error: ${(e as Error).message}`, startedAt: Date.now() });
+        osintJobs.set(jobId, { status: "error", error: `osint_error: ${(e as Error).message}`, startedAt });
       }
     })();
     return reply.send({ ok: true, jobId });
@@ -123,8 +132,8 @@ export function buildServer() {
   app.get<{ Params: { jobId: string } }>("/osint/:jobId", async (req, reply) => {
     const job = osintJobs.get(req.params.jobId);
     if (!job) return reply.code(404).send({ error: "job_not_found" });
-    // Terminal jobs are kept briefly (swept after 15 min) so a retry can re-read them.
-    return reply.send({ ok: true, status: job.status, result: job.result, error: job.error });
+    // Terminal jobs are kept (swept after 30 min) so a retry can re-read them.
+    return reply.send({ ok: true, status: job.status, result: job.result, error: job.error, progress: job.progress });
   });
 
   // §7.2/§5-1 — instant recall of a known subject (read happens BEFORE any query).

@@ -6,7 +6,12 @@ import {
   type OsintResult,
   type SubjectHint,
 } from "@hhc/shared";
-import { AgentBackendUnavailableError, type AgentClient, type InterpretRequest } from "./agentClient";
+import {
+  AgentBackendUnavailableError,
+  type AgentClient,
+  type InterpretRequest,
+  type OsintProgress,
+} from "./agentClient";
 
 export interface AgentHealth {
   ok: boolean;
@@ -183,21 +188,29 @@ export const httpAgentClient: AgentClient = {
   },
 
   // §7 runs as a background job; start it then poll so we never hold a long request.
-  async runOsintAgent(hint: SubjectHint): Promise<OsintResult> {
+  // The server caps its own work to a budget and always finalizes (partial if it ran
+  // long), so this generous deadline is just a safety net; we also surface progress.
+  async runOsintAgent(hint: SubjectHint, onProgress?: (p: OsintProgress) => void): Promise<OsintResult> {
     const start = (await postJson("/api/osint", hint)) as { jobId?: string };
     if (!start.jobId) throw new Error("osint_no_job");
-    const deadline = Date.now() + 5 * 60 * 1000;
+    const deadline = Date.now() + 12 * 60 * 1000;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 2500));
       let res: Response;
       try {
         res = await fetch(`/api/osint/${start.jobId}`);
       } catch {
-        continue;
+        continue; // transient network blip — keep polling
       }
       if (res.status === 404) throw new Error("osint_job_lost");
       if (!res.ok) continue;
-      const d = (await res.json().catch(() => ({}))) as { status?: string; result?: unknown; error?: string };
+      const d = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        result?: unknown;
+        error?: string;
+        progress?: OsintProgress;
+      };
+      if (d.progress && onProgress) onProgress(d.progress);
       if (d.status === "done") {
         const parsed = OsintResultSchema.safeParse(d.result);
         if (!parsed.success) throw new Error("invalid_osint_response");

@@ -36,11 +36,47 @@ export type LoopCaller = (params: {
   maxTokens: number;
 }) => Promise<LoopResponse>;
 
+export interface OsintProgress {
+  phase: "screening" | "model" | "finalize";
+  /** Lightweight per-source status snapshot for a live "X sources checked" UI. */
+  toolRuns: { tool: string; status: string }[];
+}
+
+export interface RunOsintOpts {
+  maxSteps?: number;
+  /** Wall-clock budget for the model tool-use loop. On exceed we finalize a PARTIAL
+   * result (the deterministic screen still completes), rather than hang. Generous. */
+  budgetMs?: number;
+  /** Per-model-call timeout so one hung request can't stall the whole job. */
+  stepTimeoutMs?: number;
+  onProgress?: (p: OsintProgress) => void;
+}
+
+const DEFAULT_BUDGET_MS = 8 * 60_000;
+const DEFAULT_STEP_TIMEOUT_MS = 90_000;
+
+/** Reject if `p` doesn't settle within `ms` (the underlying work is abandoned). */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("step_timeout")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e as Error);
+      },
+    );
+  });
+}
+
 export async function runOsint(
   hint: SubjectHint,
   tools: OsintTool[],
   call: LoopCaller,
-  opts: { maxSteps?: number } = {},
+  opts: RunOsintOpts = {},
 ): Promise<OsintResult> {
   const byName = new Map(tools.map((t) => [t.name, t]));
   const toolDefs: OsintToolDef[] = tools.map((t) => ({
@@ -49,15 +85,49 @@ export async function runOsint(
     input_schema: t.inputSchema,
   }));
 
+  const onProgress = opts.onProgress;
+  const budgetMs = opts.budgetMs ?? DEFAULT_BUDGET_MS;
+  const stepTimeoutMs = opts.stepTimeoutMs ?? DEFAULT_STEP_TIMEOUT_MS;
+  const startedAt = Date.now();
+  const toolRuns: ToolRun[] = [];
+  const report = (phase: OsintProgress["phase"]) => {
+    try {
+      onProgress?.({ phase, toolRuns: toolRuns.map((r) => ({ tool: r.tool, status: r.status })) });
+    } catch {
+      /* progress is best-effort; never let it break the run */
+    }
+  };
+
+  // Run the reliable deterministic screen CONCURRENTLY with the model loop so the
+  // most important signals (sanctions / registry / domain) are captured even if the
+  // slow model loop is cut short by the budget. Each result is reported as it lands.
+  const screenDone = deterministicScreen(tools, hint, (run) => {
+    toolRuns.push(run);
+    report("screening");
+  });
+
   const messages: Array<{ role: "user" | "assistant"; content: unknown }> = [
     { role: "user", content: buildOsintUserPrompt(hint) },
   ];
-  const toolRuns: ToolRun[] = [];
   const maxSteps = opts.maxSteps ?? 8;
   let lastText = "";
+  let truncated = false;
 
   for (let step = 0; step < maxSteps; step++) {
-    const resp = await call({ system: OSINT_SYSTEM, tools: toolDefs, messages, maxTokens: 2048 });
+    if (Date.now() - startedAt > budgetMs) {
+      truncated = true;
+      break;
+    }
+    let resp: LoopResponse;
+    try {
+      resp = await withTimeout(
+        call({ system: OSINT_SYSTEM, tools: toolDefs, messages, maxTokens: 2048 }),
+        stepTimeoutMs,
+      );
+    } catch {
+      truncated = true; // a model call timed out/errored — finalize with what we have
+      break;
+    }
     messages.push({ role: "assistant", content: resp.content });
 
     const toolUses = resp.content.filter((b) => b.type === "tool_use");
@@ -89,16 +159,13 @@ export async function runOsint(
         is_error: run.status === "error",
       });
     }
+    report("model");
     messages.push({ role: "user", content: toolResults });
   }
 
-  // Deterministic screening: always run every list/registry source (not dependent
-  // on whether the model chose to call them), so each source's result is reliable
-  // and visible. F sources run vs company + person; corporate-existence sources
-  // (A5) run vs company; domain sources vs the domain.
-  toolRuns.push(...(await deterministicScreen(tools, hint)));
-
-  return finalizeOsint(hint, lastText, toolRuns, tools);
+  await screenDone; // ensure every deterministic-screen run is in toolRuns
+  report("finalize");
+  return finalizeOsint(hint, lastText, toolRuns, tools, { truncated });
 }
 
 // Run vs company + person (produce watchlist candidates).
@@ -109,7 +176,11 @@ const CORP_SCREENING_TOOLS = ["corp_jp", "corp_jp_aux", "corp_gleif", "corp_glob
 // Run vs domain (A2 — visibility only).
 const DOMAIN_SCREENING_TOOLS = ["domain_rdap", "cert_ct"];
 
-async function deterministicScreen(tools: OsintTool[], hint: SubjectHint): Promise<ToolRun[]> {
+async function deterministicScreen(
+  tools: OsintTool[],
+  hint: SubjectHint,
+  onRun?: (run: ToolRun) => void,
+): Promise<ToolRun[]> {
   const byName = new Map(tools.map((t) => [t.name, t]));
   const company = hint.company?.trim();
   const person = hint.person?.trim();
@@ -121,12 +192,15 @@ async function deterministicScreen(tools: OsintTool[], hint: SubjectHint): Promi
     if (!tool) return;
     jobs.push(
       (async () => {
+        let r: ToolRun;
         try {
-          const r = await tool.run(arg);
-          return { ...r, citation: `${r.citation ?? toolName} — "${label}"` };
+          const res = await tool.run(arg);
+          r = { ...res, citation: `${res.citation ?? toolName} — "${label}"` };
         } catch (e) {
-          return errored(toolName, `"${label}": ${(e as Error).message}`);
+          r = errored(toolName, `"${label}": ${(e as Error).message}`);
         }
+        onRun?.(r);
+        return r;
       })(),
     );
   };
@@ -156,6 +230,7 @@ export function finalizeOsint(
   lastText: string,
   toolRuns: ToolRun[],
   tools: OsintTool[] = [],
+  opts: { truncated?: boolean } = {},
 ): OsintResult {
   const parsed = parseModelJson(lastText, OsintResultSchema);
   const base: OsintResult = parsed.ok
@@ -200,6 +275,13 @@ export function finalizeOsint(
     ]),
   ];
 
+  let notes = stripForbiddenLabels(base.notes_for_user).text;
+  if (opts.truncated) {
+    const partial =
+      "※ 時間内に全ステップを完了できず、一部のソースのみの暫定結果です（制裁・法人・ドメインの決定論スクリーニングは完了）。識別子を確認のうえ「再OSINT」で続行できます。 / Partial result: the OSINT run hit its time budget; the deterministic screen completed — re-run OSINT to continue.";
+    notes = notes ? `${notes}\n\n${partial}` : partial;
+  }
+
   return {
     subject_hint: mergeHint(base.subject_hint, hint),
     matched_indicators: matched,
@@ -207,6 +289,6 @@ export function finalizeOsint(
     evidence: base.evidence,
     tool_runs: toolRuns,
     unavailable_sources,
-    notes_for_user: stripForbiddenLabels(base.notes_for_user).text,
+    notes_for_user: notes,
   };
 }

@@ -105,6 +105,35 @@ describe("§7 OSINT loop", () => {
     expect(result.unavailable_sources).toContain("enduser_jp_meti");
   });
 
+  it("finalizes a PARTIAL result (deterministic screen still runs) when the model budget is exceeded", async () => {
+    const tools: OsintTool[] = [
+      fakeTool("sanctions_opensanctions", async (input) =>
+        ok("sanctions_opensanctions", {
+          candidates: [
+            { list: "us_ofac_sdn", matched_entity: "ACME SANCTIONED LLC", query: String(input.name ?? ""), score: 0.9, maps_to: "F1", pending_human_confirmation: false },
+          ],
+        }),
+      ),
+    ];
+    let modelCalled = false;
+    const call: LoopCaller = async () => {
+      modelCalled = true;
+      return { stop_reason: "end_turn", content: [{ type: "text", text: "{}" }] };
+    };
+    const phases: string[] = [];
+    const result = await runOsint({ company: "Acme Advisory", domain: "", person: "", title: "" }, tools, call, {
+      budgetMs: -1, // force immediate truncation before any model call
+      onProgress: (p) => phases.push(p.phase),
+    });
+    expect(modelCalled).toBe(false); // budget cut the loop before the model ran
+    // …yet the deterministic screen completed and its candidate is present:
+    expect(result.tool_runs.some((r) => r.tool === "sanctions_opensanctions")).toBe(true);
+    expect(result.watchlist_candidates).toHaveLength(1);
+    // partial note added, and progress was reported.
+    expect(result.notes_for_user).toMatch(/Partial result|暫定結果/);
+    expect(phases.length).toBeGreaterThan(0);
+  });
+
   it("finalizeOsint never lets the model inject watchlist candidates (deterministic from tools)", () => {
     const out = finalizeOsint(
       hint,

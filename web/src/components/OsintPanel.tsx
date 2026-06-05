@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { classifyToken, explainMatch, rateName, tokenizeName, type SubjectHint } from "@hhc/shared";
 import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
+import type { OsintProgress } from "../api/agentClient";
 import type { ChecklistController } from "../state/useChecklist";
 
 const EMPTY: SubjectHint = { company: "", domain: "", person: "", title: "" };
@@ -36,6 +37,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [progress, setProgress] = useState<OsintProgress | null>(null);
 
   // Seed identifiers from §6 subject hint when it arrives (the "clever" auto-extract),
   // so the edit-and-re-run fields are pre-filled with what Analyze found.
@@ -57,8 +59,9 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
     setBusy(true);
     c.setAnalyzing(true);
     setError(null);
+    setProgress(null);
     try {
-      const result = await httpAgentClient.runOsintAgent(hint);
+      const result = await httpAgentClient.runOsintAgent(hint, setProgress);
       c.applyOsintResult(result);
       setShowEdit(false);
     } catch (err) {
@@ -66,6 +69,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
     } finally {
       setBusy(false);
       c.setAnalyzing(false);
+      setProgress(null);
     }
   }
 
@@ -124,6 +128,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
           <span className="spinner" />
           <span>
             {t("osint.running")}
+            {progress ? <span className="analyzing-sub"> · {t("osint.progress", { n: progress.toolRuns.length })}</span> : null}
             <span className="analyzing-sub"> — {t("osint.runningWait")}</span>
           </span>
         </div>

@@ -16,11 +16,17 @@ export interface InterpretRequest {
   consent: boolean;
 }
 
+/** Live OSINT progress for a "N sources checked" indicator while the job runs. */
+export interface OsintProgress {
+  phase: string;
+  toolRuns: { tool: string; status: string }[];
+}
+
 export interface AgentClient {
   /** §6: pasted text/screenshots → checklist prefill suggestions (human confirms). */
   analyzeApproach(req: InterpretRequest): Promise<InterpretResult>;
   /** §7: public/lawful OSINT corroboration for an identified subject. */
-  runOsintAgent(hint: SubjectHint): Promise<OsintResult>;
+  runOsintAgent(hint: SubjectHint, onProgress?: (p: OsintProgress) => void): Promise<OsintResult>;
 }
 
 export class AgentBackendUnavailableError extends Error {

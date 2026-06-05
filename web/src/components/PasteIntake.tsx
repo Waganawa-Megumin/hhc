@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SendDisclosure } from "./ConsentGate";
 import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
+import type { OsintProgress } from "../api/agentClient";
 import type { ChecklistController } from "../state/useChecklist";
 
 interface Attachment {
@@ -95,6 +96,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
   const [withOsint, setWithOsint] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [osintProgress, setOsintProgress] = useState<OsintProgress | null>(null);
 
   const backendReady = health?.ok === true;
   const offline = health?.offline === true;
@@ -158,8 +160,9 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       const hasId = !!(hint && (hint.company || hint.domain || hint.person));
       if (withOsint && hasId) {
         setPhase("osint");
+        setOsintProgress(null);
         try {
-          const osint = await httpAgentClient.runOsintAgent(hint);
+          const osint = await httpAgentClient.runOsintAgent(hint, setOsintProgress);
           c.applyOsintResult(osint); // auto-pulls + auto-applies F2/F3 (F1 stays for confirm)
         } catch (e) {
           setError(`OSINT: ${(e as Error).message}`);
@@ -171,6 +174,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       setBusy(false);
       c.setAnalyzing(false);
       setPhase("idle");
+      setOsintProgress(null);
     }
   }
 
@@ -248,6 +252,9 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
           <span className="spinner" />
           <span>
             {phase === "osint" ? t("interpret.phaseOsint") : t("interpret.phaseInterpret")}
+            {phase === "osint" && osintProgress ? (
+              <span className="analyzing-sub"> · {t("osint.progress", { n: osintProgress.toolRuns.length })}</span>
+            ) : null}
             <span className="analyzing-sub"> — {t("interpret.analyzingWait")}</span>
           </span>
         </div>

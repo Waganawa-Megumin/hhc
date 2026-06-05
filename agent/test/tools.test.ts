@@ -114,6 +114,14 @@ describe("screening_us_csl (F1)", () => {
     expect(run.status).toBe("ok");
     expect((run.data as { candidates: unknown[] }).candidates).toHaveLength(1);
   });
+
+  it("normalizes Trade.gov's 0–100 score to a 0–1 fraction (regression: '8000%')", async () => {
+    mockFetch({ results: [{ name: "ARGO I", source: "SDN", score: 80 }] });
+    const run = await makeScreeningUsCslTool(ctx({ tradeGovKey: "k" })).run({ name: "ARK Co.,Ltd." });
+    const cand = (run.data as { candidates: Array<{ score: number }> }).candidates[0]!;
+    expect(cand.score).toBeCloseTo(0.8, 5);
+    expect(cand.score).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("reverse_image (B1) — links only, always available", () => {

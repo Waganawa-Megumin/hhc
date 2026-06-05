@@ -39,12 +39,15 @@ export function makeScreeningUsCslTool(ctx: ToolContext): OsintTool {
       if (results.length === 0) {
         return noMatch(TOOL, { source_url: "https://www.trade.gov/consolidated-screening-list", citation: "Trade.gov CSL" });
       }
+      // Trade.gov CSL returns `score` on a 0–100 scale (unlike OpenSanctions' 0–1);
+      // makeCandidate → normalizeScore folds both onto 0–1 so % display and the
+      // F-mapping stay correct (this is what fixed the "8000%" render).
       const candidates: WatchlistCandidate[] = results.slice(0, 8).map((r) =>
         makeCandidate(
           r.source ?? "CSL",
           r.name ?? "(unnamed)",
           name,
-          typeof r.score === "number" ? r.score : 0.8,
+          typeof r.score === "number" ? r.score : 80,
           ["sanction", "export-control"],
           r.source_list_url ?? "https://www.trade.gov/consolidated-screening-list",
         ),

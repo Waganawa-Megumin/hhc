@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { SubjectHint } from "@hhc/shared";
+import { jaroWinkler, type SubjectHint } from "@hhc/shared";
 import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
@@ -11,28 +11,70 @@ function normToken(s: string): string {
   return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
 }
 
-/** Highlight the tokens of `entity` that also appear in `query` (shows WHERE it matched). */
-function HighlightedEntity({ entity, query }: { entity: string; query: string }) {
-  const q = new Set(
-    query
-      .toLowerCase()
-      .split(/[^\p{L}\p{N}]+/u)
-      .filter(Boolean),
-  );
-  const parts = entity.split(/(\s+)/);
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .map(normToken)
+    .filter(Boolean);
+}
+
+// Generic corporate/legal/role tokens are in almost every name, so an exact hit on
+// one is not "where it meaningfully matched" — don't highlight them.
+const STOPWORDS = new Set([
+  "co", "ltd", "inc", "llc", "corp", "corporation", "company", "limited", "private",
+  "gmbh", "the", "and", "of", "group", "holdings", "industrial", "industries",
+  "technology", "trading", "kk", "kabushiki", "kaisha", "pte", "plc", "sa", "ag",
+  "bv", "srl", "international", "global",
+]);
+
+const STRONG_SIM = 0.92; // near-exact token
+const FUZZY_SIM = 0.86; // visibly similar (spelling / transliteration)
+
+function classify(token: string, others: string[]): "strong" | "fuzzy" | "none" {
+  const t = normToken(token);
+  if (!t || STOPWORDS.has(t)) return "none";
+  let best = 0;
+  for (const o of others) {
+    const sim = t === o ? 1 : jaroWinkler(t, o);
+    if (sim > best) best = sim;
+  }
+  if (best >= STRONG_SIM) return "strong";
+  if (best >= FUZZY_SIM) return "fuzzy";
+  return "none";
+}
+
+/** Render `text`, highlighting the tokens that match (exactly or fuzzily) a token in
+ * `against`. Shows WHERE — and how strongly — two strings overlap. */
+function Highlighted({ text, against }: { text: string; against: string }) {
+  const other = tokenize(against);
+  const parts = text.split(/(\s+)/);
   return (
     <>
-      {parts.map((p, i) =>
-        p.trim() && q.has(normToken(p)) ? (
-          <mark key={i} className="match-hl">
+      {parts.map((p, i) => {
+        if (!p.trim()) return <span key={i}>{p}</span>;
+        const level = classify(p, other);
+        return level === "none" ? (
+          <span key={i}>{p}</span>
+        ) : (
+          <mark key={i} className={`match-hl ${level}`}>
             {p}
           </mark>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
-      )}
+        );
+      })}
     </>
   );
+}
+
+/** True when no meaningful token overlaps — i.e. the hit is purely fuzzy/phonetic. */
+function isFuzzyOnly(query: string, entity: string): boolean {
+  const a = tokenize(query);
+  const b = tokenize(entity);
+  for (const ta of a) {
+    if (STOPWORDS.has(ta)) continue;
+    if (classify(ta, b) === "strong") return false;
+  }
+  return true;
 }
 
 function rateName(score: number): "high" | "mid" | "low" {
@@ -44,8 +86,10 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
   const [hint, setHint] = useState<SubjectHint>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEdit, setShowEdit] = useState(false);
 
-  // Seed identifiers from §6 subject hint when it arrives (the "clever" auto-extract).
+  // Seed identifiers from §6 subject hint when it arrives (the "clever" auto-extract),
+  // so the edit-and-re-run fields are pre-filled with what Analyze found.
   useEffect(() => {
     if (c.subjectHint) setHint((prev) => ({ ...prev, ...c.subjectHint }));
   }, [c.subjectHint]);
@@ -55,6 +99,10 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
   const noKey = health ? health.anthropicKey === false : false;
   const hasAnyId = !!(hint.company || hint.domain || hint.person || hint.title);
   const canRun = backendReady && !offline && !noKey && !busy && hasAnyId;
+  const hasResults = !!c.osint;
+  // Before any result the fields are the manual entry point; after a result they
+  // hide behind "correct & re-run" so the panel stays results-focused.
+  const editOpen = !hasResults || showEdit;
 
   async function run() {
     setBusy(true);
@@ -63,6 +111,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
     try {
       const result = await httpAgentClient.runOsintAgent(hint);
       c.applyOsintResult(result);
+      setShowEdit(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -86,28 +135,42 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
         <h2>{t("osint.heading")}</h2>
         {!backendReady ? <span className="net-badge offline">{t("interpret.backendUnavailable")}</span> : null}
       </div>
-      <p className="muted">{t("osint.intro")}</p>
+      <p className="muted">{t("osint.autoNote")}</p>
 
-      <div className="osint-fields">
-        {field("company")}
-        {field("domain")}
-        {field("person")}
-        {field("title")}
-      </div>
-      <div className="intake-actions">
-        <span className="muted small">{t("osint.publicOnly")}</span>
-        <div className="spacer" />
-        <button type="button" className="primary" onClick={run} disabled={!canRun}>
-          {busy ? (
-            <>
-              <span className="spinner" />
-              {t("osint.running")}
-            </>
-          ) : (
-            t("osint.run")
-          )}
+      {hasResults ? <OsintResults c={c} /> : <p className="muted small osint-empty">{t("osint.emptyHint")}</p>}
+
+      {hasResults ? (
+        <button type="button" className="ghost osint-edit-toggle" onClick={() => setShowEdit((v) => !v)} disabled={busy}>
+          ✎ {t("osint.editRerun")}
         </button>
-      </div>
+      ) : null}
+
+      {editOpen ? (
+        <div className="osint-edit">
+          <div className="osint-fields">
+            {field("company")}
+            {field("domain")}
+            {field("person")}
+            {field("title")}
+          </div>
+          <div className="intake-actions">
+            <span className="muted small">{t("osint.publicOnly")}</span>
+            <div className="spacer" />
+            <button type="button" className="primary" onClick={run} disabled={!canRun}>
+              {busy ? (
+                <>
+                  <span className="spinner" />
+                  {t("osint.running")}
+                </>
+              ) : hasResults ? (
+                t("osint.rerun")
+              ) : (
+                t("osint.run")
+              )}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {busy ? (
         <div className="analyzing-banner" role="status" aria-live="polite">
@@ -122,8 +185,6 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
       {offline ? <p className="warn">{t("osint.offline")}</p> : null}
       {noKey ? <p className="warn">{t("interpret.noKey")}</p> : null}
       {error ? <p className="warn">{t("interpret.error", { msg: error })}</p> : null}
-
-      {c.osint ? <OsintResults c={c} /> : null}
     </section>
   );
 }
@@ -139,20 +200,30 @@ function OsintResults({ c }: { c: ChecklistController }) {
           <p className="muted small">{t("osint.watchlistNote")}</p>
           {r.watchlist_candidates.map((w, i) => {
             const score = typeof w.score === "number" ? w.score : 0;
-            const pct = Math.round(score * 100);
+            const pct = Math.max(0, Math.min(100, Math.round(score * 100)));
             const rate = rateName(score);
             const rateLabel = rate === "high" ? t("osint.rateHigh") : rate === "mid" ? t("osint.rateMid") : t("osint.rateLow");
+            const fuzzyOnly = isFuzzyOnly(w.query, w.matched_entity);
             return (
               <div key={i} className={`watchlist-item maps-${w.maps_to}`}>
                 <div className="wl-main">
                   <div className="wl-line">
                     <span className="maps-badge">{w.maps_to}</span>
-                    <span className="wl-entity">
-                      <HighlightedEntity entity={w.matched_entity} query={w.query} />
+                    <span className="wl-match">
+                      <span className="wl-query">
+                        <Highlighted text={w.query} against={w.matched_entity} />
+                      </span>
+                      <span className="wl-arrow" aria-hidden="true">
+                        →
+                      </span>
+                      <span className="wl-entity">
+                        <Highlighted text={w.matched_entity} against={w.query} />
+                      </span>
                     </span>
                   </div>
                   <div className="muted small wl-meta">
-                    {t("osint.matchQuery")}: {w.query} · {w.list}
+                    {w.list}
+                    {fuzzyOnly ? <span className="wl-fuzzy-tag"> · {t("osint.fuzzyMatch")}</span> : null}
                   </div>
                   {typeof w.score === "number" ? (
                     <div className={`wl-rate rate-${rate}`}>
@@ -208,9 +279,7 @@ function OsintResults({ c }: { c: ChecklistController }) {
       ) : null}
 
       {r.unavailable_sources.length > 0 ? (
-        <p className="warn small">
-          {t("osint.unavailable", { sources: r.unavailable_sources.join(", ") })}
-        </p>
+        <p className="warn small">{t("osint.unavailable", { sources: r.unavailable_sources.join(", ") })}</p>
       ) : null}
 
       {r.notes_for_user ? <p className="osint-notes">{r.notes_for_user}</p> : null}

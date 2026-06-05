@@ -54,8 +54,8 @@
   },
   "interpret": {
     "heading": "Analyze (paste → automatic)",
-    "intro": "Paste the DM / scout message / screenshots and hit Analyze: the AI auto-ticks the matching indicators, and if it finds a company/name it auto-pulls category F (sanctions/lists) from public sources. You can review and adjust.",
-    "analyzeBtn": "Analyze (AI + OSINT)",
+    "intro": "Just paste the DM / scout message / screenshots and hit Analyze. The AI auto-ticks the matching indicators, and if it finds a company/name it runs the public-source lookup (OSINT) for category F (sanctions/lists) in one go. Results show in “OSINT corroboration” below, where you can review and adjust.",
+    "analyzeBtn": "Analyze",
     "phaseInterpret": "Interpreting…",
     "phaseOsint": "Running OSINT… (up to a few min)",
     "analyzingWait": "please wait until it finishes (searching & analyzing)",
@@ -81,8 +81,12 @@
     "suggestedBandHint": "AI's rough band: {{band}} (reference only; the deterministic engine sets the real score)"
   },
   "osint": {
-    "heading": "OSINT lookup (optional, public sources only)",
-    "intro": "Give a company / domain / name / title and HHC corroborates from public, lawful sources — including whether the affiliated employer/university/research institute matches a designation list. It never asserts identity or nationality.",
+    "heading": "OSINT corroboration (public sources)",
+    "autoNote": "Runs automatically when you hit Analyze, using the company/name it extracted. Results show here. If an identifier is wrong or missing, correct it below and re-run (it never asserts identity or nationality).",
+    "emptyHint": "No results yet. Run Analyze and the public-source corroboration appears here. To look up manually, enter identifiers below.",
+    "editRerun": "Correct identifiers & re-run",
+    "rerun": "Re-run OSINT with this",
+    "fuzzyMatch": "fuzzy match (only the spelling/sound is close — may be a different person/company)",
     "field": {
       "company": "Company",
       "domain": "Domain",
@@ -96,7 +100,6 @@
     "offline": "Offline mode; §7 is unavailable.",
     "watchlistHeading": "Sanctions / watchlist candidates",
     "watchlistNote": "Candidates only. Nothing scores until a human confirms identity. Transliteration / same-name hits are weak (F3).",
-    "matchQuery": "Matched against",
     "matchStrength": "Match strength",
     "rateHigh": "high",
     "rateMid": "medium",

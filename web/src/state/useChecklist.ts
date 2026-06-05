@@ -13,6 +13,11 @@ import {
 
 export type CoefficientId = "E1" | "E2";
 
+/** Auto-confirm F1 (which forces the HIGH band) only for near-exact list hits;
+ * anything weaker stays a one-click human confirm to resist same-name/transliteration
+ * false positives. */
+const F1_AUTO_CONFIRM_SCORE = 0.9;
+
 export interface AiNotes {
   notes: string;
   observations: string[];
@@ -112,15 +117,21 @@ export function useChecklist(): ChecklistController {
       const fromWatchlist: IndicatorMatch[] = r.watchlist_candidates
         .filter((w) => w.maps_to === "F2" || w.maps_to === "F3")
         .map((w) => ({ id: w.maps_to, confidence: "medium", rationale: `${w.list}: ${w.matched_entity}` }));
-      // High-confidence F1 list hit → auto-confirm (the human unticks if it's a
-      // transliteration/same-name false positive). Surfaced with its rationale.
-      const f1 = r.watchlist_candidates.find((w) => w.maps_to === "F1");
-      const f1Suggestion: IndicatorMatch[] = f1
-        ? [{ id: "F1", confidence: "high", rationale: `${f1.list}: ${f1.matched_entity}` }]
+      // F1 forces the HIGH band, so only AUTO-confirm on a genuinely strong hit
+      // (score ≥ threshold). Loose fuzzy/transliteration matches (e.g. a 0.80
+      // name hit) are still surfaced as one-click candidates but must NOT silently
+      // escalate the whole case — that's what produced false "high" verdicts.
+      const f1s = r.watchlist_candidates.filter((w) => w.maps_to === "F1");
+      const bestF1 = f1s.reduce<(typeof f1s)[number] | null>(
+        (best, w) => ((w.score ?? 0) > (best?.score ?? -1) ? w : best),
+        null,
+      );
+      const f1Suggestion: IndicatorMatch[] = bestF1
+        ? [{ id: "F1", confidence: "high", rationale: `${bestF1.list}: ${bestF1.matched_entity}` }]
         : [];
       mergeSuggestions([...r.matched_indicators, ...fromWatchlist, ...f1Suggestion]);
       tickMany([...r.matched_indicators.map((m) => m.id), ...fromWatchlist.map((m) => m.id)]);
-      if (f1) setHumanConfirmedF1(true);
+      if (bestF1 && (bestF1.score ?? 0) >= F1_AUTO_CONFIRM_SCORE) setHumanConfirmedF1(true);
       setSubjectHint((prev) => ({ ...(prev ?? { company: "", domain: "", person: "", title: "" }), ...r.subject_hint }));
       setOsint(r);
     },

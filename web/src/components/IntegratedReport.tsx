@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { buildReportDraft, type AssessmentSummary } from "@hhc/shared";
+import { buildEventLog, buildReportDraft, type AssessmentSummary, type EventLogInput } from "@hhc/shared";
 import { useLang } from "../i18n";
 import { generateReport, type AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
@@ -11,15 +11,21 @@ interface ReportEntry {
   band: string;
   body: string;
   ai: boolean;
+  /** Deterministic detailed event log snapshot captured at generation time. */
+  log: string;
 }
 
-function downloadText(filename: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+function downloadText(filename: string, text: string, mime = "text/markdown") {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function tsSlug(iso: string): string {
+  return iso.replace(/[:.]/g, "-");
 }
 
 function escapeHtml(s: string): string {
@@ -167,6 +173,30 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
     };
   }
 
+  /** Assemble the deterministic event-log input from the current analysis state. */
+  function buildLogInput(): EventLogInput {
+    const hint = c.subjectHint ?? { company: "", domain: "", person: "", title: "" };
+    return {
+      generatedAt: new Date().toISOString(),
+      subject: hint,
+      nationalityContext: c.nationalityContext || undefined,
+      result: c.result,
+      coefficients: c.coefficients,
+      humanConfirmedF1: c.humanConfirmedF1,
+      suggestions: c.suggestions,
+      selectedIds: [...c.selected],
+      osint: c.osint,
+      interpretation: c.aiNotes
+        ? { notes: c.aiNotes.notes, observations: c.aiNotes.observations, suggestedBand: c.aiNotes.suggestedBand }
+        : undefined,
+    };
+  }
+
+  function downloadLog() {
+    const at = new Date().toISOString();
+    downloadText(`hhc-eventlog-${tsSlug(at)}.txt`, buildEventLog(buildLogInput(), lang), "text/plain");
+  }
+
   async function generate() {
     setBusy(true);
     setError(null);
@@ -187,7 +217,9 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
       body = buildReportDraft(assessment, lang).body;
       setError(t("report2.aiUnavailable", { msg: (e as Error).message }));
     }
-    const entry: ReportEntry = { id: crypto.randomUUID(), at: new Date().toISOString(), band: c.result.band, body, ai };
+    const at = new Date().toISOString();
+    const log = buildEventLog({ ...buildLogInput(), generatedAt: at }, lang);
+    const entry: ReportEntry = { id: crypto.randomUUID(), at, band: c.result.band, body, ai, log };
     setHistory((prev) => [entry, ...prev]);
     setBusy(false);
   }
@@ -195,17 +227,22 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
   return (
     <section className="integrated-report" aria-label={t("report2.heading")}>
       <h2>{t("report2.heading")}</h2>
-      <button type="button" className="primary" onClick={generate} disabled={busy || !ready}>
-        {busy ? (
-          <>
-            <span className="spinner" />
-            {t("report2.generating")}
-          </>
-        ) : (
-          t("report2.generate")
-        )}
-      </button>
-      {!ready ? <p className="muted small">{t("report2.disabledHint")}</p> : null}
+      <div className="report2-actions">
+        <button type="button" className="primary" onClick={generate} disabled={busy || !ready}>
+          {busy ? (
+            <>
+              <span className="spinner" />
+              {t("report2.generating")}
+            </>
+          ) : (
+            t("report2.generate")
+          )}
+        </button>
+        <button type="button" className="ghost" onClick={downloadLog} disabled={!ready} title={t("report2.eventLogHint")}>
+          {t("report2.eventLog")}
+        </button>
+      </div>
+      {!ready ? <p className="muted small">{t("report2.disabledHint")}</p> : <p className="muted small">{t("report2.eventLogHint")}</p>}
       {ready && health && !health.anthropicKey ? <p className="muted small">{t("report2.keyNote")}</p> : null}
       {error ? <p className="warn small">{error}</p> : null}
 
@@ -226,7 +263,7 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
                 <button
                   type="button"
                   className="ghost"
-                  onClick={() => downloadText(`hhc-report-${r.at.replace(/[:.]/g, "-")}.md`, r.body)}
+                  onClick={() => downloadText(`hhc-report-${tsSlug(r.at)}.md`, r.body)}
                 >
                   {t("report2.download")}
                 </button>
@@ -238,6 +275,13 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
                   }}
                 >
                   {t("report2.pdf")}
+                </button>
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={() => downloadText(`hhc-eventlog-${tsSlug(r.at)}.txt`, r.log, "text/plain")}
+                >
+                  {t("report2.eventLog")}
                 </button>
               </div>
               <pre className="report-body">{r.body}</pre>

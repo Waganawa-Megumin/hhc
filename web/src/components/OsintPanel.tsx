@@ -1,59 +1,23 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { jaroWinkler, type SubjectHint } from "@hhc/shared";
+import { classifyToken, explainMatch, rateName, tokenizeName, type SubjectHint } from "@hhc/shared";
 import { httpAgentClient } from "../api/httpAgentClient";
 import type { AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
 
 const EMPTY: SubjectHint = { company: "", domain: "", person: "", title: "" };
 
-function normToken(s: string): string {
-  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
-}
-
-function tokenize(s: string): string[] {
-  return s
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .map(normToken)
-    .filter(Boolean);
-}
-
-// Generic corporate/legal/role tokens are in almost every name, so an exact hit on
-// one is not "where it meaningfully matched" — don't highlight them.
-const STOPWORDS = new Set([
-  "co", "ltd", "inc", "llc", "corp", "corporation", "company", "limited", "private",
-  "gmbh", "the", "and", "of", "group", "holdings", "industrial", "industries",
-  "technology", "trading", "kk", "kabushiki", "kaisha", "pte", "plc", "sa", "ag",
-  "bv", "srl", "international", "global",
-]);
-
-const STRONG_SIM = 0.92; // near-exact token
-const FUZZY_SIM = 0.86; // visibly similar (spelling / transliteration)
-
-function classify(token: string, others: string[]): "strong" | "fuzzy" | "none" {
-  const t = normToken(token);
-  if (!t || STOPWORDS.has(t)) return "none";
-  let best = 0;
-  for (const o of others) {
-    const sim = t === o ? 1 : jaroWinkler(t, o);
-    if (sim > best) best = sim;
-  }
-  if (best >= STRONG_SIM) return "strong";
-  if (best >= FUZZY_SIM) return "fuzzy";
-  return "none";
-}
-
 /** Render `text`, highlighting the tokens that match (exactly or fuzzily) a token in
- * `against`. Shows WHERE — and how strongly — two strings overlap. */
+ * `against`. Shows WHERE — and how strongly — two strings overlap. Uses the shared
+ * matchExplain logic so the panel and the detailed event log agree. */
 function Highlighted({ text, against }: { text: string; against: string }) {
-  const other = tokenize(against);
+  const other = tokenizeName(against);
   const parts = text.split(/(\s+)/);
   return (
     <>
       {parts.map((p, i) => {
         if (!p.trim()) return <span key={i}>{p}</span>;
-        const level = classify(p, other);
+        const level = classifyToken(p, other);
         return level === "none" ? (
           <span key={i}>{p}</span>
         ) : (
@@ -64,21 +28,6 @@ function Highlighted({ text, against }: { text: string; against: string }) {
       })}
     </>
   );
-}
-
-/** True when no meaningful token overlaps — i.e. the hit is purely fuzzy/phonetic. */
-function isFuzzyOnly(query: string, entity: string): boolean {
-  const a = tokenize(query);
-  const b = tokenize(entity);
-  for (const ta of a) {
-    if (STOPWORDS.has(ta)) continue;
-    if (classify(ta, b) === "strong") return false;
-  }
-  return true;
-}
-
-function rateName(score: number): "high" | "mid" | "low" {
-  return score >= 0.85 ? "high" : score >= 0.7 ? "mid" : "low";
 }
 
 export function OsintPanel({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
@@ -203,7 +152,7 @@ function OsintResults({ c }: { c: ChecklistController }) {
             const pct = Math.max(0, Math.min(100, Math.round(score * 100)));
             const rate = rateName(score);
             const rateLabel = rate === "high" ? t("osint.rateHigh") : rate === "mid" ? t("osint.rateMid") : t("osint.rateLow");
-            const fuzzyOnly = isFuzzyOnly(w.query, w.matched_entity);
+            const fuzzyOnly = explainMatch(w.query, w.matched_entity).fuzzyOnly;
             return (
               <div key={i} className={`watchlist-item maps-${w.maps_to}`}>
                 <div className="wl-main">

@@ -57,7 +57,27 @@ const L = {
       "(2) You are hiring/contracting: a fraudulent applicant/freelancer (fake identity to get hired/contracted and gain access to systems, data, code — e.g. the DPRK IT-worker fraud).",
     ],
   },
+  osintHead: { ja: "OSINT照会で行うこと（流れ）", en: "What the OSINT lookup does (flow)" },
+  osint: {
+    ja: [
+      "「解析」または「再OSINT」を押すと、抽出した会社名・ドメイン・氏名・肩書きで、公開・適法な情報源を一括照会します。",
+      "確認すること: ①ドメインの登録年齢・登録者（RDAP／証明書ログ）②法人の実在（国税庁法人番号・GLEIF・OpenCorporates 等）③制裁・輸出管理・PEP・ウォッチリスト合致（OpenSanctions・米CSL・METI外国ユーザーリスト）④画像の使い回し（リバース画像検索の導線）。",
+      "制裁・法人・ドメイン系はAI任せにせず毎回必ず実行（決定論スクリーニング）。候補は重複排除し、ソース別の成否を表示します。",
+      "リスト合致は『候補』止まり: 人間が同定を確認するまで加点しません。弱い一致・翻字・同名はフラグのみ（F3）。身元・国籍は断定しません。",
+      "『証拠なし＝無実ではない』: 鍵未設定や到達不可のソースは『利用不可』として明示します。",
+      "詳細（なぜ・どこで・どう一致したか）は、統合レポート横の『詳細ログ(.txt)』で出力できます。",
+    ],
+    en: [
+      "Pressing “Analyze” or “Re-OSINT” queries public, lawful sources in one pass, using the extracted company / domain / name / title.",
+      "What it checks: (1) domain age & registrant (RDAP / CT logs); (2) company existence (JP houjin-bangou, GLEIF, OpenCorporates…); (3) sanctions / export-control / PEP / watchlist matches (OpenSanctions, US CSL, METI end-user list); (4) image reuse (reverse-image search links).",
+      "The sanctions/registry/domain sources always run deterministically (not at the AI's discretion); candidates are de-duplicated and each source's status is shown.",
+      "List hits are only candidates: nothing scores until a human confirms identity. Weak / transliteration / same-name hits are flag-only (F3). It never asserts identity or nationality.",
+      "“No evidence ≠ innocence”: sources without a key or that can't be reached are shown explicitly as unavailable.",
+      "For the details (why / where / how it matched), export the “Detailed log (.txt)” next to the integrated report.",
+    ],
+  },
   sourcesHead: { ja: "使用する情報源（API）", en: "Sources (APIs) used" },
+  sourcesIntro: { ja: "上記フローで照会する各ソースの内訳:", en: "Per-source breakdown queried by the flow above:" },
   colTool: { ja: "ツール", en: "Tool" },
   colCheck: { ja: "調べること", en: "What it checks" },
   colInd: { ja: "指標", en: "Indicator" },
@@ -144,7 +164,11 @@ export function AboutPanel({ onClose }: { onClose: () => void }) {
           <h3>{L.scenariosHead[lang]}</h3>
           {list(L.scenarios[lang])}
 
+          <h3>{L.osintHead[lang]}</h3>
+          {list(L.osint[lang])}
+
           <h3>{L.sourcesHead[lang]}</h3>
+          <p className="muted small">{L.sourcesIntro[lang]}</p>
           <table className="about-table">
             <thead>
               <tr>

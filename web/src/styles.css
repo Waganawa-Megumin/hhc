@@ -266,9 +266,10 @@ button .spinner { margin-right: 0.4rem; }
 /* §5-7 integrated report (AI-organized) + session history */
 .integrated-report { border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.9rem; background: var(--panel); }
 .integrated-report h2 { margin-top: 0; }
+.report2-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 .report-history { margin-top: 0.7rem; }
 .report-history h3 { font-size: 0.92rem; margin: 0.5rem 0 0.3rem; }
 .report-entry { border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.6rem; margin-bottom: 0.4rem; }
 .report-entry summary { cursor: pointer; font-size: 0.85rem; }
 .report-entry summary .band-badge { margin-right: 0.3rem; }
-.report-entry-actions { display: flex; gap: 0.4rem; margin: 0.4rem 0; }
+.report-entry-actions { display: flex; gap: 0.4rem; margin: 0.4rem 0; flex-wrap: wrap; }

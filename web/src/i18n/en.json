@@ -85,7 +85,7 @@
     "autoNote": "Runs automatically when you hit Analyze, using the company/name it extracted. Results show here. If an identifier is wrong or missing, correct it below and re-run (it never asserts identity or nationality).",
     "emptyHint": "No results yet. Run Analyze and the public-source corroboration appears here. To look up manually, enter identifiers below.",
     "editRerun": "Correct identifiers & re-run",
-    "rerun": "Re-run OSINT with this",
+    "rerun": "Re-OSINT",
     "fuzzyMatch": "fuzzy match (only the spelling/sound is close — may be a different person/company)",
     "field": {
       "company": "Company",
@@ -160,6 +160,8 @@
     "deterministic": "deterministic",
     "download": "Markdown (.md)",
     "pdf": "PDF (print)",
+    "eventLog": "Detailed log (.txt)",
+    "eventLogHint": "A flat, greppable text log of why / where / how things matched — easy to analyze later (deterministic, no AI needed).",
     "popupBlocked": "Popup was blocked. Allow popups and try again."
   }
 }

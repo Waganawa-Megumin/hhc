@@ -32,10 +32,13 @@ export interface ChecklistController {
   subjectHint: SubjectHint | null;
   aiNotes: AiNotes | null;
   osint: OsintResult | null;
+  /** True while an analyze/OSINT run is in progress (gates the report button). */
+  analyzing: boolean;
   result: ScoreResult;
   toggle: (id: string) => void;
   toggleCoefficient: (id: CoefficientId) => void;
   setHumanConfirmedF1: (v: boolean) => void;
+  setAnalyzing: (v: boolean) => void;
   setNationalityContext: (v: string) => void;
   setConcernOrigins: (v: string[]) => void;
   applyInterpretResult: (r: InterpretResult) => void;
@@ -53,6 +56,7 @@ export function useChecklist(): ChecklistController {
   const [subjectHint, setSubjectHint] = useState<SubjectHint | null>(null);
   const [aiNotes, setAiNotes] = useState<AiNotes | null>(null);
   const [osint, setOsint] = useState<OsintResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const toggle = useCallback((id: string) => {
     setSelected((prev) => {
@@ -133,6 +137,7 @@ export function useChecklist(): ChecklistController {
     setSubjectHint(null);
     setAiNotes(null);
     setOsint(null);
+    setAnalyzing(false);
   }, []);
 
   // The authoritative score. nationalityContext and AI suggestions are intentionally
@@ -152,10 +157,12 @@ export function useChecklist(): ChecklistController {
     subjectHint,
     aiNotes,
     osint,
+    analyzing,
     result,
     toggle,
     toggleCoefficient,
     setHumanConfirmedF1,
+    setAnalyzing,
     setNationalityContext,
     setConcernOrigins,
     applyInterpretResult,

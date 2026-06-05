@@ -192,7 +192,22 @@ button .spinner { margin-right: 0.4rem; }
 .osint-input { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.45rem 0.6rem; }
 .osint-results { margin-top: 0.8rem; border-top: 1px dashed var(--border); padding-top: 0.7rem; }
 .osint-results h3 { font-size: 0.95rem; margin: 0.6rem 0 0.3rem; }
-.watchlist-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.watchlist-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.wl-main { flex: 1; min-width: 0; }
+.wl-line { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.wl-entity { font-weight: 600; }
+.wl-meta { margin-top: 0.15rem; word-break: break-word; }
+.match-hl { background: rgba(229,83,75,0.28); color: #fff; border-radius: 3px; padding: 0 2px; font-weight: 800; }
+.wl-rate { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; font-size: 0.8rem; }
+.wl-rate-label { white-space: nowrap; }
+.rate-high .wl-rate-label { color: var(--high); font-weight: 700; }
+.rate-mid .wl-rate-label { color: var(--mid); font-weight: 700; }
+.rate-low .wl-rate-label { color: var(--muted); }
+.wl-bar { flex: 1; max-width: 140px; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+.wl-bar-fill { display: block; height: 100%; background: var(--muted); }
+.rate-high .wl-bar-fill { background: var(--high); }
+.rate-mid .wl-bar-fill { background: var(--mid); }
+.wl-action { flex: none; }
 .watchlist-item.maps-F1 { border-color: rgba(229,83,75,0.5); background: rgba(229,83,75,0.08); }
 .watchlist-item.maps-F2 { border-color: rgba(217,161,58,0.5); }
 .maps-badge { font-weight: 800; background: var(--chip); border-radius: 5px; padding: 0.05rem 0.4rem; }
@@ -237,3 +252,13 @@ button .spinner { margin-right: 0.4rem; }
 .report-draft summary { cursor: pointer; font-weight: 600; }
 .report-actions { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
 .report-body { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+
+/* §5-7 integrated report (AI-organized) + session history */
+.integrated-report { border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.9rem; background: var(--panel); }
+.integrated-report h2 { margin-top: 0; }
+.report-history { margin-top: 0.7rem; }
+.report-history h3 { font-size: 0.92rem; margin: 0.5rem 0 0.3rem; }
+.report-entry { border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.6rem; margin-bottom: 0.4rem; }
+.report-entry summary { cursor: pointer; font-size: 0.85rem; }
+.report-entry summary .band-badge { margin-right: 0.3rem; }
+.report-entry-actions { display: flex; gap: 0.4rem; margin: 0.4rem 0; }

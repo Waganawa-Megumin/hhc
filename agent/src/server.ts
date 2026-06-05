@@ -10,6 +10,7 @@ import { buildTools, toolContextFromEnv } from "./tools/registry";
 import { getDb, isDbEnabled } from "./db/db";
 import { recall, recordInquiry, getStatsRows } from "./db/store";
 import { exportCaseArmored, importCaseArmored } from "./db/exportImport";
+import { generateReport, type ReportRequest } from "./anthropic/report";
 
 const IdentifiersSchema = z
   .object({
@@ -167,6 +168,46 @@ export function buildServer() {
     } catch (e) {
       return reply.code(500).send({ error: (e as Error).message });
     }
+  });
+
+  // §5-7 — AI-organized integrated report built on top of the deterministic facts.
+  app.post("/report", async (req, reply) => {
+    const Body = z.object({
+      lang: z.enum(["ja", "en"]).default("ja"),
+      assessment: z
+        .object({
+          generatedAt: z.string().default(() => new Date().toISOString()),
+          subject: z
+            .object({
+              company: z.string().default(""),
+              domain: z.string().default(""),
+              person: z.string().default(""),
+              title: z.string().default(""),
+            })
+            .default({ company: "", domain: "", person: "", title: "" }),
+          score: z.number().default(0),
+          band: z.enum(["low", "mid", "high"]).default("low"),
+          bandSource: z.enum(["score", "override"]).default("score"),
+          criticalFlags: z.array(z.string()).default([]),
+          matchedIndicatorIds: z.array(z.string()).default([]),
+          evidence: z
+            .array(z.object({ source: z.string().default(""), url: z.string().optional(), summary: z.string().default("") }))
+            .default([]),
+          unavailableSources: z.array(z.string()).default([]),
+          nationalityContext: z.string().optional(),
+        })
+        .passthrough(),
+      watchlist_candidates: z.array(z.any()).optional(),
+      tool_runs: z.array(z.any()).optional(),
+      osint_notes: z.string().optional(),
+    });
+    const parsed = Body.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
+    if (isOffline()) return reply.code(503).send({ error: "offline" });
+    if (!hasAnthropicKey()) return reply.code(503).send({ error: "no_api_key" });
+    const out = await generateReport(parsed.data as unknown as ReportRequest, makeModelComplete());
+    if (!out.ok) return reply.code(502).send({ error: out.error });
+    return reply.send({ ok: true, report: out.report });
   });
 
   // §9 — import (merge) an age-encrypted export back in.

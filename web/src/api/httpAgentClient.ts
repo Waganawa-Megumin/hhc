@@ -124,6 +124,26 @@ export interface ImportResult {
   evidence_cache: number;
 }
 
+export interface ReportRequestBody {
+  lang: "ja" | "en";
+  assessment: unknown;
+  watchlist_candidates?: unknown[];
+  tool_runs?: unknown[];
+  osint_notes?: string;
+}
+
+/** §5-7 integrated report (AI-organized). Throws on no key / offline / error. */
+export async function generateReport(body: ReportRequestBody): Promise<string> {
+  const res = await fetch("/api/report", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
+  return String(d.report ?? "");
+}
+
 export async function importCase(data: string): Promise<ImportResult> {
   const res = await fetch("/api/import", {
     method: "POST",

@@ -10,6 +10,7 @@ import { AboutPanel } from "./components/AboutPanel";
 import { KnownSubjectBadge } from "./components/KnownSubjectBadge";
 import { CaseHistoryPanel } from "./components/CaseHistoryPanel";
 import { ReportDraft } from "./components/ReportDraft";
+import { IntegratedReport } from "./components/IntegratedReport";
 import { useChecklist } from "./state/useChecklist";
 import { useOnline } from "./state/useOffline";
 import { getAgentHealth, type AgentHealth } from "./api/httpAgentClient";
@@ -68,6 +69,7 @@ export default function App() {
           <ScorePanel result={c.result} />
           <ActionPanel band={c.result.band} />
           <ReportDraft c={c} />
+          <IntegratedReport c={c} health={health} />
         </aside>
       </main>
 

@@ -7,6 +7,38 @@ import type { ChecklistController } from "../state/useChecklist";
 
 const EMPTY: SubjectHint = { company: "", domain: "", person: "", title: "" };
 
+function normToken(s: string): string {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+/** Highlight the tokens of `entity` that also appear in `query` (shows WHERE it matched). */
+function HighlightedEntity({ entity, query }: { entity: string; query: string }) {
+  const q = new Set(
+    query
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean),
+  );
+  const parts = entity.split(/(\s+)/);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.trim() && q.has(normToken(p)) ? (
+          <mark key={i} className="match-hl">
+            {p}
+          </mark>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+function rateName(score: number): "high" | "mid" | "low" {
+  return score >= 0.85 ? "high" : score >= 0.7 ? "mid" : "low";
+}
+
 export function OsintPanel({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
   const { t } = useTranslation();
   const [hint, setHint] = useState<SubjectHint>(EMPTY);
@@ -26,6 +58,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
 
   async function run() {
     setBusy(true);
+    c.setAnalyzing(true);
     setError(null);
     try {
       const result = await httpAgentClient.runOsintAgent(hint);
@@ -34,6 +67,7 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
       setError((err as Error).message);
     } finally {
       setBusy(false);
+      c.setAnalyzing(false);
     }
   }
 
@@ -103,26 +137,51 @@ function OsintResults({ c }: { c: ChecklistController }) {
         <div className="watchlist">
           <h3>{t("osint.watchlistHeading")}</h3>
           <p className="muted small">{t("osint.watchlistNote")}</p>
-          {r.watchlist_candidates.map((w, i) => (
-            <div key={i} className={`watchlist-item maps-${w.maps_to}`}>
-              <div>
-                <span className="maps-badge">{w.maps_to}</span> <strong>{w.matched_entity}</strong>
-                <span className="muted small"> · {w.list}{typeof w.score === "number" ? ` · ${w.score.toFixed(2)}` : ""}</span>
+          {r.watchlist_candidates.map((w, i) => {
+            const score = typeof w.score === "number" ? w.score : 0;
+            const pct = Math.round(score * 100);
+            const rate = rateName(score);
+            const rateLabel = rate === "high" ? t("osint.rateHigh") : rate === "mid" ? t("osint.rateMid") : t("osint.rateLow");
+            return (
+              <div key={i} className={`watchlist-item maps-${w.maps_to}`}>
+                <div className="wl-main">
+                  <div className="wl-line">
+                    <span className="maps-badge">{w.maps_to}</span>
+                    <span className="wl-entity">
+                      <HighlightedEntity entity={w.matched_entity} query={w.query} />
+                    </span>
+                  </div>
+                  <div className="muted small wl-meta">
+                    {t("osint.matchQuery")}: {w.query} · {w.list}
+                  </div>
+                  {typeof w.score === "number" ? (
+                    <div className={`wl-rate rate-${rate}`}>
+                      <span className="wl-rate-label">
+                        {t("osint.matchStrength")}: {pct}%（{rateLabel}）
+                      </span>
+                      <span className="wl-bar">
+                        <span className="wl-bar-fill" style={{ width: `${pct}%` }} />
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="wl-action">
+                  {w.maps_to === "F1" ? (
+                    <button
+                      type="button"
+                      className={c.humanConfirmedF1 ? "ghost" : "primary small-btn"}
+                      onClick={() => c.setHumanConfirmedF1(true)}
+                      disabled={c.humanConfirmedF1}
+                    >
+                      {c.humanConfirmedF1 ? t("osint.f1Confirmed") : t("osint.confirmF1")}
+                    </button>
+                  ) : (
+                    <span className="muted small">{t("osint.pending")}</span>
+                  )}
+                </div>
               </div>
-              {w.maps_to === "F1" ? (
-                <button
-                  type="button"
-                  className={c.humanConfirmedF1 ? "ghost" : "primary small-btn"}
-                  onClick={() => c.setHumanConfirmedF1(true)}
-                  disabled={c.humanConfirmedF1}
-                >
-                  {c.humanConfirmedF1 ? t("osint.f1Confirmed") : t("osint.confirmF1")}
-                </button>
-              ) : (
-                <span className="muted small">{t("osint.pending")}</span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 

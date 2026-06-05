@@ -96,6 +96,11 @@
     "offline": "Offline mode; §7 is unavailable.",
     "watchlistHeading": "Sanctions / watchlist candidates",
     "watchlistNote": "Candidates only. Nothing scores until a human confirms identity. Transliteration / same-name hits are weak (F3).",
+    "matchQuery": "Matched against",
+    "matchStrength": "Match strength",
+    "rateHigh": "high",
+    "rateMid": "medium",
+    "rateLow": "low",
     "confirmF1": "Confirm identity & add F1",
     "f1Confirmed": "F1 confirmed",
     "pending": "Awaiting human confirmation",
@@ -140,5 +145,16 @@
     "freeze": "Save evidence snapshot",
     "frozen": "Frozen (SHA-256: {{hash}}…)",
     "body": "Body"
+  },
+  "report2": {
+    "heading": "Integrated report",
+    "generate": "Generate integrated report",
+    "generating": "Generating…",
+    "disabledHint": "Enabled once analysis completes.",
+    "keyNote": "AI organizing needs an Anthropic key; without it a deterministic version is produced.",
+    "aiUnavailable": "Couldn't use AI ({{msg}}); produced a deterministic version.",
+    "historyHeading": "History ({{count}})",
+    "deterministic": "deterministic",
+    "download": "Download (.md)"
   }
 }

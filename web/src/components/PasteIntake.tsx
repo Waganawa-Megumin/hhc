@@ -144,6 +144,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
 
   async function runAnalyze() {
     setBusy(true);
+    c.setAnalyzing(true);
     setError(null);
     setPhase("interpret");
     try {
@@ -168,6 +169,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
       setError((err as Error).message);
     } finally {
       setBusy(false);
+      c.setAnalyzing(false);
       setPhase("idle");
     }
   }

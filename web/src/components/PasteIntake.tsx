@@ -225,13 +225,26 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
           {t("interpret.clear")}
         </button>
         <button type="button" className="primary" onClick={runAnalyze} disabled={!canSend}>
-          {busy
-            ? phase === "osint"
-              ? t("interpret.phaseOsint")
-              : t("interpret.phaseInterpret")
-            : t("interpret.analyzeBtn")}
+          {busy ? (
+            <>
+              <span className="spinner" />
+              {phase === "osint" ? t("interpret.phaseOsint") : t("interpret.phaseInterpret")}
+            </>
+          ) : (
+            t("interpret.analyzeBtn")
+          )}
         </button>
       </div>
+
+      {busy ? (
+        <div className="analyzing-banner" role="status" aria-live="polite">
+          <span className="spinner" />
+          <span>
+            {phase === "osint" ? t("interpret.phaseOsint") : t("interpret.phaseInterpret")}
+            <span className="analyzing-sub"> — {t("interpret.analyzingWait")}</span>
+          </span>
+        </div>
+      ) : null}
       <SendDisclosure />
       <p className="muted small limits-note">{t("interpret.limits")}</p>
 

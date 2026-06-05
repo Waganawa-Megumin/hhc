@@ -64,9 +64,26 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
         <span className="muted small">{t("osint.publicOnly")}</span>
         <div className="spacer" />
         <button type="button" className="primary" onClick={run} disabled={!canRun}>
-          {busy ? t("osint.running") : t("osint.run")}
+          {busy ? (
+            <>
+              <span className="spinner" />
+              {t("osint.running")}
+            </>
+          ) : (
+            t("osint.run")
+          )}
         </button>
       </div>
+
+      {busy ? (
+        <div className="analyzing-banner" role="status" aria-live="polite">
+          <span className="spinner" />
+          <span>
+            {t("osint.running")}
+            <span className="analyzing-sub"> — {t("osint.runningWait")}</span>
+          </span>
+        </div>
+      ) : null}
 
       {offline ? <p className="warn">{t("osint.offline")}</p> : null}
       {noKey ? <p className="warn">{t("interpret.noKey")}</p> : null}

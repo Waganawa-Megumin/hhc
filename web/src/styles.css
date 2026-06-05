@@ -158,6 +158,14 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .file-btn { cursor: pointer; }
 .primary { background: var(--accent); color: #0b0e1a; border: 0; border-radius: 6px; padding: 0.4rem 0.9rem; font-weight: 700; cursor: pointer; }
 .primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Progress: spinner + banner shown until the whole query/analysis completes */
+.spinner { display: inline-block; width: 0.95em; height: 0.95em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: hhc-spin 0.7s linear infinite; vertical-align: -0.12em; }
+@keyframes hhc-spin { to { transform: rotate(360deg); } }
+.analyzing-banner { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; padding: 0.55rem 0.8rem; border: 1px solid var(--accent); background: rgba(110,168,254,0.1); border-radius: 8px; color: var(--accent); font-weight: 700; }
+.analyzing-banner .spinner { width: 1.15em; height: 1.15em; }
+.analyzing-sub { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+button .spinner { margin-right: 0.4rem; }
 .thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
 .thumb { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
 .pdf-chip { width: auto; height: auto; display: inline-flex; align-items: center; padding: 0.35rem 0.6rem; font-size: 0.8rem; background: var(--panel-2); color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="hhcShield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6ea8fe"/>
+      <stop offset="1" stop-color="#3b6fd4"/>
+    </linearGradient>
+  </defs>
+  <!-- shield: defensive self-check -->
+  <path d="M16 2 L28 6 L28 14 C28 22 23 27.2 16 30 C9 27.2 4 22 4 14 L4 6 Z" fill="url(#hhcShield)"/>
+  <!-- magnifier: investigate / check -->
+  <circle cx="14.2" cy="14.2" r="5" fill="none" stroke="#ffffff" stroke-width="2.2"/>
+  <line x1="18" y1="18" x2="22.6" y2="22.6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

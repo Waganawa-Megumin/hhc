@@ -33,9 +33,12 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="title-row">
-          <div>
-            <h1>{t("app.title")}</h1>
-            <p className="subtitle">{t("app.subtitle")}</p>
+          <div className="brand">
+            <img className="app-logo" src="/favicon.svg" alt="" width="40" height="40" />
+            <div>
+              <h1>{t("app.title")}</h1>
+              <p className="subtitle">{t("app.subtitle")}</p>
+            </div>
           </div>
           <div className="header-right">
             <span className={online ? "net-badge online" : "net-badge offline"}>

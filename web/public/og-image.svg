@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141831"/>
+      <stop offset="1" stop-color="#0d1020"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6ea8fe"/>
+      <stop offset="1" stop-color="#3b6fd4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#6ea8fe"/>
+
+  <!-- logo (shield + magnifier), scaled from the 32px mark -->
+  <g transform="translate(120,150)">
+    <g transform="scale(8.2)">
+      <path d="M16 2 L28 6 L28 14 C28 22 23 27.2 16 30 C9 27.2 4 22 4 14 L4 6 Z" fill="url(#shield)"/>
+      <circle cx="14.2" cy="14.2" r="5" fill="none" stroke="#ffffff" stroke-width="2.2"/>
+      <line x1="18" y1="18" x2="22.6" y2="22.6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+    <text x="470" y="270" font-size="120" font-weight="800" fill="#e7e9f3" letter-spacing="2">HHC</text>
+    <text x="474" y="330" font-size="46" font-weight="600" fill="#9aa0bf">Human Hunter Check</text>
+    <text x="120" y="520" font-size="34" fill="#c2c7da">求人を装った勧誘かを自己診断 — 公開・適法な OSINT で裏取り</text>
+    <text x="120" y="568" font-size="28" fill="#9aa0bf">Self-triage a job/headhunting approach for foreign-intelligence recruitment</text>
+  </g>
+</svg>

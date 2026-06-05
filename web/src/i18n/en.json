@@ -67,6 +67,8 @@
     "limits": "Limits: up to 8 attachments · PDF ≤32MB each · text ≤200KB each (truncated beyond) · images auto-resized (1568px long edge)",
     "pdfTooLarge": "PDF too large (max 32MB); some were skipped.",
     "dropHint": "Drop images / PDFs / text here",
+    "dropAffordance": "Attach images, PDFs, or text by drag & drop, paste, or the “Add” button",
+    "removeAttachment": "Remove",
     "clear": "Clear",
     "interpretBtn": "Interpret with AI",
     "interpreting": "Interpreting…",

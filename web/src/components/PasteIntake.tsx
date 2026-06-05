@@ -178,6 +178,10 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
     setError(null);
   }
 
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
   return (
     <section className="intake" aria-label={t("interpret.heading")}>
       <div className="section-head">
@@ -205,6 +209,7 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
         />
         {dragging ? <div className="drop-hint">{t("interpret.dropHint")}</div> : null}
       </div>
+      <p className="drop-affordance muted small">📎 {t("interpret.dropAffordance")}</p>
       <div className="intake-actions">
         <label className="ghost file-btn">
           {t("interpret.addImages")}
@@ -250,15 +255,26 @@ export function PasteIntake({ c, health }: { c: ChecklistController; health: Age
 
       {images.length > 0 ? (
         <div className="thumbs">
-          {images.map((att, i) =>
-            att.kind === "pdf" ? (
-              <span key={i} className="thumb pdf-chip" title={att.name}>
-                📄 {att.name ?? "PDF"}
-              </span>
-            ) : (
-              <img key={i} src={att.previewUrl} alt={`pasted-${i}`} className="thumb" />
-            ),
-          )}
+          {images.map((att, i) => (
+            <div key={i} className="thumb-wrap">
+              {att.kind === "pdf" ? (
+                <span className="thumb pdf-chip" title={att.name}>
+                  📄 {att.name ?? "PDF"}
+                </span>
+              ) : (
+                <img src={att.previewUrl} alt={`pasted-${i}`} className="thumb" />
+              )}
+              <button
+                type="button"
+                className="thumb-remove"
+                aria-label={t("interpret.removeAttachment")}
+                title={t("interpret.removeAttachment")}
+                onClick={() => removeImage(i)}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
         </div>
       ) : null}
 

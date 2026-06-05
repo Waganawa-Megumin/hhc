@@ -67,6 +67,8 @@
     "limits": "制限: 添付は最大8件・PDFは32MB/件・テキストは200KB/件（超過は切り詰め）・画像は自動縮小（長辺1568px）",
     "pdfTooLarge": "PDFが大きすぎます（最大32MB）。一部を除外しました。",
     "dropHint": "ここに画像/PDF/テキストをドロップ",
+    "dropAffordance": "画像・PDF・テキストは ドラッグ&ドロップ／貼り付け／「追加」ボタン で添付できます",
+    "removeAttachment": "削除",
     "clear": "クリア",
     "interpretBtn": "AIで解釈",
     "interpreting": "解釈中…",

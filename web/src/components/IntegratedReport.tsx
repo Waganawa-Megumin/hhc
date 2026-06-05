@@ -93,8 +93,9 @@ function mdToHtml(md: string): string {
   return html;
 }
 
-/** Open a branded, printable window (user picks "Save as PDF"). Returns false if blocked. */
+/** Open a branded, printable window with the banner cover (user picks "Save as PDF"). */
 function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
+  const banner = `${location.origin}/og-image.png`;
   const logo = `${location.origin}/favicon.svg`;
   const when = new Date(entry.at).toLocaleString();
   const disclaimer =
@@ -105,11 +106,11 @@ function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
 <title>HHC report ${escapeHtml(when)}</title>
 <style>
   :root { color-scheme: light; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; color: #1a1a1a; margin: 32px; line-height: 1.6; }
-  .rpt-head { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #3b6fd4; padding-bottom: 10px; margin-bottom: 18px; }
-  .rpt-head img { width: 44px; height: 44px; }
-  .rpt-head h1 { font-size: 20px; margin: 0; }
-  .rpt-sub { color: #666; font-size: 12px; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; color: #1a1a1a; margin: 32px; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rpt-banner { width: 100%; height: auto; border-radius: 10px; display: block; }
+  .rpt-banner-fallback { display: none; align-items: center; gap: 12px; border-bottom: 3px solid #3b6fd4; padding-bottom: 10px; }
+  .rpt-banner-fallback img { width: 44px; height: 44px; }
+  .rpt-meta { color: #555; font-size: 12px; margin: 12px 0 18px; }
   .band { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; }
   .band-high { background: #fde2e0; color: #b5302a; }
   .band-mid { background: #fbeccd; color: #8a5a12; }
@@ -118,28 +119,22 @@ function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
   code { background: #f0f2f7; padding: 0 3px; border-radius: 3px; font-size: 90%; }
   ul { margin: 6px 0; } a { color: #2a5db0; }
   footer { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 8px; color: #777; font-size: 11px; }
-  @media print { body { margin: 12mm; } a { color: #2a5db0; } }
+  @media print { body { margin: 12mm; } }
 </style></head>
 <body>
-  <div class="rpt-head">
-    <img src="${logo}" alt=""/>
-    <div>
-      <h1>HHC — Human Hunter Check</h1>
-      <div class="rpt-sub">${escapeHtml(when)} · <span class="band band-${entry.band}">${entry.band.toUpperCase()}</span></div>
-    </div>
-  </div>
+  <img class="rpt-banner" src="${banner}" alt="HHC — Human Hunter Check"
+       onerror="this.style.display='none';document.getElementById('fb').style.display='flex';" />
+  <div id="fb" class="rpt-banner-fallback"><img src="${logo}" alt=""/><h1 style="margin:0;font-size:20px;">HHC — Human Hunter Check</h1></div>
+  <div class="rpt-meta">${escapeHtml(when)} · <span class="band band-${entry.band}">${entry.band.toUpperCase()}</span></div>
   <main>${mdToHtml(entry.body)}</main>
   <footer>${escapeHtml(disclaimer)}</footer>
+  <script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},350);});</script>
 </body></html>`;
   const w = window.open("", "_blank");
   if (!w) return false;
   w.document.open();
   w.document.write(html);
   w.document.close();
-  w.onload = () => {
-    w.focus();
-    w.print();
-  };
   return true;
 }
 

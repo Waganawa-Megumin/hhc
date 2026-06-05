@@ -1,8 +1,13 @@
 # HHC — Human Hunter Check
 
-A **local-first, self-triage tool** to help you assess whether a job / headhunting
-approach (often on LinkedIn) is actually a **foreign-intelligence recruitment
-attempt** — and to corroborate it from **public, lawful** OSINT sources.
+A **local-first, self-triage tool** to assess a suspicious counterparty and
+corroborate it from **public, lawful** OSINT sources. It covers two directions:
+
+- **You are the target** — a job / headhunting approach (often on LinkedIn) that
+  is actually a **foreign-intelligence recruitment attempt**.
+- **You are hiring / contracting** — an **applicant or freelance contractor with a
+  fraudulent identity** seeking access to your systems, data, or code (e.g. the
+  DPRK IT-worker fraud).
 
 Built from the design spec (`HHC_design_v1.1.md`), aligned with the 2026 Five Eyes
 joint warning, UK NPSA *Think Before You Link*, and Japan PSIA economic-security

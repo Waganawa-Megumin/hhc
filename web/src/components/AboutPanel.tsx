@@ -46,6 +46,17 @@ const L = {
       "Nationality/ethnicity are not the scoring axis (state nexus is captured by affiliation/list matching = category F; category G is an optional human-set nexus).",
     ],
   },
+  scenariosHead: { ja: "想定シナリオ", en: "Use cases" },
+  scenarios: {
+    ja: [
+      "① あなたが標的: 求人・ヘッドハンティングを装った勧誘（コンサル/シンクタンク偽装 → 機密アクセスの見極め → 報酬と引き換えに情報要求）。",
+      "② あなたが採用・発注側: 応募者・フリーランス受託者の“なりすまし”（偽の身元で採用/受託し、システム・データ・コードへのアクセスを得る。例: 北朝鮮IT労働者詐欺）。",
+    ],
+    en: [
+      "(1) You are the target: a recruiter/headhunter front (fake consultancy/think tank → gauges your access → asks for info in exchange for pay).",
+      "(2) You are hiring/contracting: a fraudulent applicant/freelancer (fake identity to get hired/contracted and gain access to systems, data, code — e.g. the DPRK IT-worker fraud).",
+    ],
+  },
   sourcesHead: { ja: "使用する情報源（API）", en: "Sources (APIs) used" },
   colTool: { ja: "ツール", en: "Tool" },
   colCheck: { ja: "調べること", en: "What it checks" },
@@ -58,12 +69,14 @@ const L = {
       "2026年6月 ファイブ・アイズ共同警告（求人サイト等での機密アクセス者の勧誘）",
       "英NPSA \"Think Before You Link\" / \"Applicant Beware\"",
       "公安調査庁「経済安全保障の確保に向けて」",
+      "Five Eyes/FBI: なりすましIT労働者（北朝鮮等）の不正就労・委託への警告",
       "照合リスト: OFAC SDN・BIS Entity/Unverified/MEU・UN安保理・EU・英OFSI・METI外国ユーザーリスト・PEP",
     ],
     en: [
       "June 2026 Five Eyes joint warning (recruiting access-holders via job sites)",
       "UK NPSA \"Think Before You Link\" / \"Applicant Beware\"",
       "Japan PSIA economic-security guidance",
+      "Five Eyes/FBI advisories on fraudulent (e.g. DPRK) IT workers gaining employment/contracts",
       "Lists screened: OFAC SDN, BIS Entity/Unverified/MEU, UN, EU, UK OFSI, METI end-user list, PEP",
     ],
   },
@@ -127,6 +140,9 @@ export function AboutPanel({ onClose }: { onClose: () => void }) {
         <div className="modal-body">
           <h3>{L.whatHead[lang]}</h3>
           {list(L.what[lang])}
+
+          <h3>{L.scenariosHead[lang]}</h3>
+          {list(L.scenarios[lang])}
 
           <h3>{L.sourcesHead[lang]}</h3>
           <table className="about-table">

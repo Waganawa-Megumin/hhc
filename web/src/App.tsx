@@ -43,8 +43,8 @@ export default function App() {
             </div>
           </div>
           <div className="header-right">
-            <button type="button" className="ghost about-btn" onClick={() => setAboutOpen(true)}>
-              {t("about.button")}
+            <button type="button" className="about-btn" onClick={() => setAboutOpen(true)}>
+              <span aria-hidden="true">ⓘ</span> {t("about.button")}
             </button>
             <span className={online ? "net-badge online" : "net-badge offline"}>
               {online ? t("offline.online") : t("offline.offline")}

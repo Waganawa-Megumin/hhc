@@ -7,10 +7,10 @@
     "high": { "min": 13 }
   },
   "categories": {
-    "A": { "label": { "ja": "募集主体の実体性", "en": "Substance of the recruiting entity" } },
+    "A": { "label": { "ja": "相手の実体性（募集主体／応募者・受託者）", "en": "Counterparty substance (recruiter / applicant)" } },
     "B": { "label": { "ja": "アカウント真正性", "en": "Account authenticity" } },
     "C": { "label": { "ja": "コミュニケーション挙動", "en": "Communication behaviour" } },
-    "D": { "label": { "ja": "要求内容", "en": "What is being asked" } },
+    "D": { "label": { "ja": "要求・狙い", "en": "Requests / objectives" } },
     "E": { "label": { "ja": "標的属性（係数）", "en": "Target attributes (coefficients)" } },
     "F": { "label": { "ja": "制裁・輸出管理・ウォッチリスト合致", "en": "Sanctions / export-control / watchlist match" } },
     "G": { "label": { "ja": "国家ネクサス（人手設定・任意）", "en": "State nexus (human-set, optional)" } }
@@ -59,8 +59,8 @@
       "description": { "ja": "外部リンクや添付を開かせようとし、時間的に急かす。", "en": "Tries to get you to open external links/attachments and applies time pressure." } },
 
     { "id": "D1", "category": "D", "type": "weight", "weight": 4, "critical": false,
-      "label": { "ja": "非公開情報・所属/人脈/アクセス権を聞く", "en": "Asks about non-public info, affiliations, networks, access" },
-      "description": { "ja": "あなたの所属・人脈・アクセス権・非公開情報を探る。", "en": "Probes your affiliations, networks, access rights, or non-public information." } },
+      "label": { "ja": "非公開情報・所属/人脈/アクセス権を聞く（または機密システムへのアクセスを求める）", "en": "Asks about non-public info / affiliations / access (or seeks access to sensitive systems)" },
+      "description": { "ja": "あなたの所属・人脈・アクセス権・非公開情報を探る。採用・発注の相手の場合: 早期に機密システム・データ・リポジトリ・認証情報へのアクセスを求める。", "en": "Probes your affiliations, networks, access rights, or non-public information. If they are an applicant/contractor: seeks early access to sensitive systems, data, repos, or credentials." } },
     { "id": "D2", "category": "D", "type": "weight", "weight": 3, "critical": false,
       "label": { "ja": "外交・防衛・経済・先端技術のレポート要求", "en": "Requests reports on diplomacy/defense/economy/advanced tech" },
       "description": { "ja": "機微分野のレポートやブリーフィングの提出を求める。", "en": "Requests reports or briefings in sensitive domains." } },
@@ -73,10 +73,10 @@
 
     { "id": "E1", "category": "E", "type": "coefficient", "coefficient": 1.3,
       "label": { "ja": "機密/先端技術アクセスあり", "en": "Has access to classified/advanced technology" },
-      "description": { "ja": "あなたが機密または先端技術へのアクセスを持つ（リスク係数）。", "en": "You hold access to classified or advanced technology (a risk multiplier)." } },
+      "description": { "ja": "あなた、または委託・採用するプロジェクトが機密・先端技術にアクセスを持つ（リスク係数）。", "en": "You — or the project you'd hire/contract for — hold access to classified or advanced technology (a risk multiplier)." } },
     { "id": "E2", "category": "E", "type": "coefficient", "coefficient": 1.2,
       "label": { "ja": "政府・防衛・研究の現/元関係者", "en": "Current/former government/defense/research affiliate" },
-      "description": { "ja": "あなたが政府・防衛・研究機関の現職または元職（リスク係数）。", "en": "You are a current or former government/defense/research affiliate (a risk multiplier)." } },
+      "description": { "ja": "あなたまたは関係組織が政府・防衛・研究の現/元関係者（リスク係数）。", "en": "You or your organization are a current/former government/defense/research affiliate (a risk multiplier)." } },
 
     { "id": "F1", "category": "F", "type": "watchlist", "weight": 5, "critical": true, "requiresHumanConfirm": true,
       "label": { "ja": "募集元/関連法人/個人/所属機関が指定リストに高確信で合致（自動確認・誤検出なら解除）", "en": "Recruiter / related entity / person / affiliated institution matches a designation list with high confidence (auto-confirmed; untick if a false positive)" },

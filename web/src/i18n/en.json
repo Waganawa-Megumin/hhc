@@ -155,6 +155,8 @@
     "aiUnavailable": "Couldn't use AI ({{msg}}); produced a deterministic version.",
     "historyHeading": "History ({{count}})",
     "deterministic": "deterministic",
-    "download": "Download (.md)"
+    "download": "Markdown (.md)",
+    "pdf": "PDF (print)",
+    "popupBlocked": "Popup was blocked. Allow popups and try again."
   }
 }

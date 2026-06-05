@@ -155,6 +155,8 @@
     "aiUnavailable": "AI整理を使えませんでした（{{msg}}）。決定論版を出力しました。",
     "historyHeading": "履歴（{{count}}）",
     "deterministic": "決定論版",
-    "download": "ダウンロード(.md)"
+    "download": "Markdown(.md)",
+    "pdf": "PDF（印刷）",
+    "popupBlocked": "ポップアップがブロックされました。許可して再度お試しください。"
   }
 }

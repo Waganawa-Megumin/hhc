@@ -22,6 +22,127 @@ function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Minimal, safe Markdown → HTML for the report subset (escapes first). */
+function mdToHtml(md: string): string {
+  const inline = (s: string) =>
+    escapeHtml(s)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  let html = "";
+  let inList = false;
+  let inPara = false;
+  const closePara = () => {
+    if (inPara) {
+      html += "</p>";
+      inPara = false;
+    }
+  };
+  const closeList = () => {
+    if (inList) {
+      html += "</ul>";
+      inList = false;
+    }
+  };
+  for (const raw of md.split(/\r?\n/)) {
+    const line = raw.trimEnd();
+    if (!line.trim()) {
+      closePara();
+      closeList();
+      continue;
+    }
+    const h = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (h) {
+      closePara();
+      closeList();
+      const lvl = h[1]!.length;
+      html += `<h${lvl}>${inline(h[2]!)}</h${lvl}>`;
+      continue;
+    }
+    const li = /^[-*]\s+(.*)$/.exec(line);
+    if (li) {
+      closePara();
+      if (!inList) {
+        html += "<ul>";
+        inList = true;
+      }
+      html += `<li>${inline(li[1]!)}</li>`;
+      continue;
+    }
+    if (/^---+$/.test(line)) {
+      closePara();
+      closeList();
+      html += "<hr/>";
+      continue;
+    }
+    closeList();
+    if (!inPara) {
+      html += "<p>";
+      inPara = true;
+    } else {
+      html += "<br/>";
+    }
+    html += inline(line);
+  }
+  closePara();
+  closeList();
+  return html;
+}
+
+/** Open a branded, printable window (user picks "Save as PDF"). Returns false if blocked. */
+function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
+  const logo = `${location.origin}/favicon.svg`;
+  const when = new Date(entry.at).toLocaleString();
+  const disclaimer =
+    lang === "ja"
+      ? "本書は断定・告発ではなく、指標合致と公開情報に基づく自衛上のリスク評価です。民族の自動推論は行っていません。"
+      : "This is not an accusation; it is a self-defense risk assessment based on indicator matches and public information. No automated ethnicity inference was performed.";
+  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"/>
+<title>HHC report ${escapeHtml(when)}</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; color: #1a1a1a; margin: 32px; line-height: 1.6; }
+  .rpt-head { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #3b6fd4; padding-bottom: 10px; margin-bottom: 18px; }
+  .rpt-head img { width: 44px; height: 44px; }
+  .rpt-head h1 { font-size: 20px; margin: 0; }
+  .rpt-sub { color: #666; font-size: 12px; }
+  .band { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+  .band-high { background: #fde2e0; color: #b5302a; }
+  .band-mid { background: #fbeccd; color: #8a5a12; }
+  .band-low { background: #e9eaef; color: #555; }
+  h1,h2,h3 { line-height: 1.3; } h2 { font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 20px; } h3 { font-size: 14px; }
+  code { background: #f0f2f7; padding: 0 3px; border-radius: 3px; font-size: 90%; }
+  ul { margin: 6px 0; } a { color: #2a5db0; }
+  footer { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 8px; color: #777; font-size: 11px; }
+  @media print { body { margin: 12mm; } a { color: #2a5db0; } }
+</style></head>
+<body>
+  <div class="rpt-head">
+    <img src="${logo}" alt=""/>
+    <div>
+      <h1>HHC — Human Hunter Check</h1>
+      <div class="rpt-sub">${escapeHtml(when)} · <span class="band band-${entry.band}">${entry.band.toUpperCase()}</span></div>
+    </div>
+  </div>
+  <main>${mdToHtml(entry.body)}</main>
+  <footer>${escapeHtml(disclaimer)}</footer>
+</body></html>`;
+  const w = window.open("", "_blank");
+  if (!w) return false;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => {
+    w.focus();
+    w.print();
+  };
+  return true;
+}
+
 /** §5-7 — generate an integrated report (AI-organized, deterministic fallback),
  * keep a session history, and allow per-report download. */
 export function IntegratedReport({ c, health }: { c: ChecklistController; health: AgentHealth | null }) {
@@ -113,6 +234,15 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
                   onClick={() => downloadText(`hhc-report-${r.at.replace(/[:.]/g, "-")}.md`, r.body)}
                 >
                   {t("report2.download")}
+                </button>
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={() => {
+                    if (!openPrintWindow(r, lang)) setError(t("report2.popupBlocked"));
+                  }}
+                >
+                  {t("report2.pdf")}
                 </button>
               </div>
               <pre className="report-body">{r.body}</pre>

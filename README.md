@@ -1,5 +1,9 @@
 # HHC — Human Hunter Check
 
+<p align="center">
+  <img src="web/public/og-image.png" alt="HHC — Human Hunter Check" width="760" />
+</p>
+
 A **local-first, self-triage tool** to assess a suspicious counterparty and
 corroborate it from **public, lawful** OSINT sources. It covers two directions:
 
@@ -40,7 +44,7 @@ guidance.
 
 ## Status
 
-All phases implemented (≈80 tests, all run with no network and no API key).
+All phases implemented (100+ tests, all run with no network and no API key).
 
 | Phase | Scope | State |
 |------|-------|-------|
@@ -70,7 +74,7 @@ Requires Node 20+ (tested on Node 22).
 
 ```bash
 npm install
-npm test            # ~80 deterministic tests, no network, no API key
+npm test            # 100+ deterministic tests, no network, no API key
 npm run typecheck
 npm run dev:web     # open the printed localhost URL
 npm run build       # production build of the Layer-1 UI

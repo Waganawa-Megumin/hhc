@@ -76,6 +76,8 @@ recommended action, copy a report draft, and freeze a SHA-256 evidence snapshot.
 
 ## Run in GitHub Codespaces (browser, keys in Secrets)
 
+> 日本語の操作ガイド（毎回の起動・更新・トラブル対処）: [`docs/起動ガイド.md`](docs/起動ガイド.md)
+
 Run the whole thing from a browser with your API key stored as a **Codespaces
 secret** — never in the repo or on disk. The devcontainer maps the secret to the
 env var the backend already reads.

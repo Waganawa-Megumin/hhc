@@ -2,9 +2,17 @@
   "name": "HHC (Human Hunter Check)",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
 
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
   // Install workspace deps when the Codespace is created (builds the native
   // SQLCipher driver if no prebuild is available — the image has the toolchain).
   "postCreateCommand": "npm install",
+
+  // Best-effort: try to make port 5173 public on each start (GitHub can't default
+  // a port to public; it resets to private on restart). Harmless if not permitted.
+  "postStartCommand": "nohup bash .devcontainer/publish-port.sh 5173 >/tmp/hhc-publish-port.log 2>&1 &",
 
   // Only the web UI is forwarded. The agent backend (port 8787) holds your API
   // key and binds 127.0.0.1; the web dev server reaches it via an in-container

@@ -111,10 +111,8 @@ export function OsintPanel({ c, health }: { c: ChecklistController; health: Agen
                   <span className="spinner" />
                   {t("osint.running")}
                 </>
-              ) : hasResults ? (
-                t("osint.rerun")
               ) : (
-                t("osint.run")
+                t("osint.rerun")
               )}
             </button>
           </div>

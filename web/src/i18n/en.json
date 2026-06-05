@@ -94,7 +94,6 @@
       "title": "Title / affiliation"
     },
     "publicOnly": "Public, lawful sources only (no LinkedIn scraping)",
-    "run": "Run OSINT lookup",
     "running": "Looking up…",
     "runningWait": "querying public sources (can take a few minutes)",
     "offline": "Offline mode; §7 is unavailable.",

@@ -161,6 +161,9 @@
     "pdf": "PDF（印刷）",
     "eventLog": "詳細ログ(.txt)",
     "eventLogHint": "なぜ・どこで・どう一致したかを記録した、後から分析しやすいテキストログ（AI不要・決定論）。",
+    "notebookSource": "NotebookLM用ソース(.md)",
+    "notebookHint": "「NotebookLM用ソース(.md)」をNotebookLMに取り込むと、Infographic・音声概要・要約をそちらで1クリック生成できます（HHC側は決定論・AI不要）。",
+    "openNotebookLm": "NotebookLMを開く",
     "popupBlocked": "ポップアップがブロックされました。許可して再度お試しください。"
   }
 }

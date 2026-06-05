@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { buildEventLog, buildReportDraft, type AssessmentSummary, type EventLogInput } from "@hhc/shared";
+import { buildEventLog, buildNotebookLmSource, buildReportDraft, type AssessmentSummary, type EventLogInput } from "@hhc/shared";
 import { useLang } from "../i18n";
 import { generateReport, type AgentHealth } from "../api/httpAgentClient";
 import type { ChecklistController } from "../state/useChecklist";
@@ -197,6 +197,11 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
     downloadText(`hhc-eventlog-${tsSlug(at)}.txt`, buildEventLog(buildLogInput(), lang), "text/plain");
   }
 
+  function downloadNotebookSource() {
+    const at = new Date().toISOString();
+    downloadText(`hhc-notebooklm-${tsSlug(at)}.md`, buildNotebookLmSource(buildLogInput(), lang), "text/markdown");
+  }
+
   async function generate() {
     setBusy(true);
     setError(null);
@@ -241,8 +246,24 @@ export function IntegratedReport({ c, health }: { c: ChecklistController; health
         <button type="button" className="ghost" onClick={downloadLog} disabled={!ready} title={t("report2.eventLogHint")}>
           {t("report2.eventLog")}
         </button>
+        <button
+          type="button"
+          className="ghost"
+          onClick={downloadNotebookSource}
+          disabled={!ready}
+          title={t("report2.notebookHint")}
+        >
+          {t("report2.notebookSource")}
+        </button>
+        <a className="ghost-link small" href="https://notebooklm.google.com/" target="_blank" rel="noreferrer noopener">
+          {t("report2.openNotebookLm")} ↗
+        </a>
       </div>
-      {!ready ? <p className="muted small">{t("report2.disabledHint")}</p> : <p className="muted small">{t("report2.eventLogHint")}</p>}
+      {!ready ? (
+        <p className="muted small">{t("report2.disabledHint")}</p>
+      ) : (
+        <p className="muted small">{t("report2.notebookHint")}</p>
+      )}
       {ready && health && !health.anthropicKey ? <p className="muted small">{t("report2.keyNote")}</p> : null}
       {error ? <p className="warn small">{error}</p> : null}
 

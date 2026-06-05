@@ -3,6 +3,7 @@ import {
   explainMatch,
   rateName,
   buildEventLog,
+  buildNotebookLmSource,
   scoreApproach,
   type EventLogInput,
 } from "../src";
@@ -84,5 +85,30 @@ describe("buildEventLog", () => {
     expect(log).toMatch(/band=(low|mid|high)/);
     expect(log).toContain("[UNAVAILABLE SOURCES]");
     expect(log).toContain("sanctions_opensanctions");
+  });
+});
+
+describe("buildNotebookLmSource", () => {
+  it("produces a self-contained source with verdict, glossary and key facts", () => {
+    const md = buildNotebookLmSource(makeInput(), "ja");
+    expect(md).toContain("NotebookLM");
+    expect(md).toContain("キーファクト");
+    expect(md).toMatch(/B3:/); // glossary explains the matched indicator
+    expect(md).toMatch(/スコア/);
+  });
+
+  it("includes the band and the watchlist match detail (how it matched)", () => {
+    const md = buildNotebookLmSource(makeInput(), "en");
+    expect(md).toMatch(/Risk band/);
+    expect(md).toMatch(/ARGO I/);
+    expect(md).toMatch(/match strength/i);
+  });
+
+  it("scrubs forbidden labels from included model text", () => {
+    const input = makeInput();
+    input.suggestions = { B3: { id: "B3", confidence: "high", rationale: "likely a スパイ recruiter" } };
+    const md = buildNotebookLmSource(input, "en");
+    expect(md).not.toMatch(/スパイ/);
+    expect(md).toContain("redacted-label");
   });
 });

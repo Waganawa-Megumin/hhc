@@ -161,6 +161,9 @@
     "pdf": "PDF (print)",
     "eventLog": "Detailed log (.txt)",
     "eventLogHint": "A flat, greppable text log of why / where / how things matched — easy to analyze later (deterministic, no AI needed).",
+    "notebookSource": "NotebookLM source (.md)",
+    "notebookHint": "Import “NotebookLM source (.md)” into NotebookLM to one-click an Infographic / Audio Overview / summary there (HHC side is deterministic, no AI needed).",
+    "openNotebookLm": "Open NotebookLM",
     "popupBlocked": "Popup was blocked. Allow popups and try again."
   }
 }

@@ -14,4 +14,5 @@ export * from "./stats";
 export * from "./reportDraft";
 export * from "./matchExplain";
 export * from "./eventLog";
+export * from "./notebookSource";
 export * from "./policy";

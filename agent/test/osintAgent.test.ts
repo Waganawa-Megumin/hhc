@@ -134,6 +134,34 @@ describe("§7 OSINT loop", () => {
     expect(phases.length).toBeGreaterThan(0);
   });
 
+  it("issues an identical (tool,args) call only once across the model loop and the screen (429 mitigation)", async () => {
+    let calls = 0;
+    const tools: OsintTool[] = [
+      fakeTool("sanctions_opensanctions", async (input) => {
+        calls += 1;
+        return ok("sanctions_opensanctions", {
+          candidates: [
+            { list: "x", matched_entity: "X", query: String(input.name ?? ""), score: 0.9, maps_to: "F1", pending_human_confirmation: false },
+          ],
+        });
+      }),
+    ];
+    // The model asks for the same sanctions call the deterministic screen will make.
+    let step = 0;
+    const call: LoopCaller = async () => {
+      step += 1;
+      if (step === 1) {
+        return {
+          stop_reason: "tool_use",
+          content: [{ type: "tool_use", id: "t1", name: "sanctions_opensanctions", input: { name: "Acme Advisory" } }],
+        };
+      }
+      return { stop_reason: "end_turn", content: [{ type: "text", text: "{}" }] };
+    };
+    await runOsint({ company: "Acme Advisory", domain: "", person: "", title: "" }, tools, call);
+    expect(calls).toBe(1); // the per-run cache collapsed the duplicate into one request
+  });
+
   it("finalizeOsint never lets the model inject watchlist candidates (deterministic from tools)", () => {
     const out = finalizeOsint(
       hint,

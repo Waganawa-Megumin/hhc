@@ -79,11 +79,39 @@ export async function runOsint(
   opts: RunOsintOpts = {},
 ): Promise<OsintResult> {
   const byName = new Map(tools.map((t) => [t.name, t]));
-  const toolDefs: OsintToolDef[] = tools.map((t) => ({
-    name: t.name,
-    description: t.available ? t.description : `${t.description} [UNAVAILABLE: ${t.unavailableReason ?? "n/a"} — will return 'unavailable'; treat absence as NOT evidence of innocence]`,
-    input_schema: t.inputSchema,
-  }));
+  // The deterministic screen ALWAYS runs the list/registry/domain sources, so the
+  // model doesn't need them — exposing them only invites duplicate calls (and, for
+  // OpenSanctions, HTTP 429 rate-limiting). Advertise only the tools the screen
+  // doesn't cover (web search, reverse-image links); the loop can still execute any
+  // tool if asked.
+  const screenToolNames = new Set([...F_SCREENING_TOOLS, ...CORP_SCREENING_TOOLS, ...DOMAIN_SCREENING_TOOLS]);
+  const toolDefs: OsintToolDef[] = tools
+    .filter((t) => !screenToolNames.has(t.name))
+    .map((t) => ({
+      name: t.name,
+      description: t.available ? t.description : `${t.description} [UNAVAILABLE: ${t.unavailableReason ?? "n/a"} — will return 'unavailable'; treat absence as NOT evidence of innocence]`,
+      input_schema: t.inputSchema,
+    }));
+
+  // Per-run call cache: an identical (tool, args) call is issued to the network only
+  // once, even if both the model loop and the deterministic screen want it. Stores
+  // the in-flight promise so concurrent identical calls share one request.
+  const callCache = new Map<string, Promise<ToolRun>>();
+  const callTool = (tool: OsintTool, args: Record<string, unknown>): Promise<ToolRun> => {
+    const key = `${tool.name}:${JSON.stringify(args)}`;
+    let p = callCache.get(key);
+    if (!p) {
+      p = (async () => {
+        try {
+          return await tool.run(args);
+        } catch (e) {
+          return errored(tool.name, (e as Error).message);
+        }
+      })();
+      callCache.set(key, p);
+    }
+    return p;
+  };
 
   const onProgress = opts.onProgress;
   const budgetMs = opts.budgetMs ?? DEFAULT_BUDGET_MS;
@@ -101,7 +129,7 @@ export async function runOsint(
   // Run the reliable deterministic screen CONCURRENTLY with the model loop so the
   // most important signals (sanctions / registry / domain) are captured even if the
   // slow model loop is cut short by the budget. Each result is reported as it lands.
-  const screenDone = deterministicScreen(tools, hint, (run) => {
+  const screenDone = deterministicScreen(tools, hint, callTool, (run) => {
     toolRuns.push(run);
     report("screening");
   });
@@ -145,12 +173,7 @@ export async function runOsint(
       const id = String(tu.id ?? "");
       const input = (tu.input ?? {}) as Record<string, unknown>;
       const tool = byName.get(name);
-      let run: ToolRun;
-      try {
-        run = tool ? await tool.run(input) : errored(name, "unknown tool");
-      } catch (e) {
-        run = errored(name, (e as Error).message);
-      }
+      const run: ToolRun = tool ? await callTool(tool, input) : errored(name, "unknown tool");
       toolRuns.push(run);
       toolResults.push({
         type: "tool_result",
@@ -179,6 +202,7 @@ const DOMAIN_SCREENING_TOOLS = ["domain_rdap", "cert_ct"];
 async function deterministicScreen(
   tools: OsintTool[],
   hint: SubjectHint,
+  callTool: (tool: OsintTool, args: Record<string, unknown>) => Promise<ToolRun>,
   onRun?: (run: ToolRun) => void,
 ): Promise<ToolRun[]> {
   const byName = new Map(tools.map((t) => [t.name, t]));
@@ -192,13 +216,9 @@ async function deterministicScreen(
     if (!tool) return;
     jobs.push(
       (async () => {
-        let r: ToolRun;
-        try {
-          const res = await tool.run(arg);
-          r = { ...res, citation: `${res.citation ?? toolName} — "${label}"` };
-        } catch (e) {
-          r = errored(toolName, `"${label}": ${(e as Error).message}`);
-        }
+        // Shared cache (never throws); label the citation with the query for display.
+        const res = await callTool(tool, arg);
+        const r: ToolRun = { ...res, citation: `${res.citation ?? toolName} — "${label}"` };
         onRun?.(r);
         return r;
       })(),
@@ -262,6 +282,18 @@ export function finalizeOsint(
     }
   }
 
+  // De-duplicate the per-source list for display: the same (tool, args) call can be
+  // pushed by both the model loop and the deterministic screen (the call cache
+  // already prevented a second network request). Distinct queries/statuses survive.
+  const dedupedRuns: ToolRun[] = [];
+  const seenRun = new Set<string>();
+  for (const r of toolRuns) {
+    const key = `${r.tool}|${r.status}|${r.citation ?? ""}|${r.note ?? ""}`;
+    if (seenRun.has(key)) continue;
+    seenRun.add(key);
+    dedupedRuns.push(r);
+  }
+
   const matched = base.matched_indicators
     .filter((m) => isKnownIndicator(m.id) && indicatorById(m.id)?.type !== "coefficient")
     .map((m) => ({ ...m, rationale: stripForbiddenLabels(m.rationale).text }));
@@ -270,7 +302,7 @@ export function finalizeOsint(
   // were never callable (missing credential / offline). Absence ≠ exoneration.
   const unavailable_sources = [
     ...new Set([
-      ...toolRuns.filter((r) => r.status === "unavailable" || r.status === "error").map((r) => r.tool),
+      ...dedupedRuns.filter((r) => r.status === "unavailable" || r.status === "error").map((r) => r.tool),
       ...tools.filter((t) => !t.available).map((t) => t.name),
     ]),
   ];
@@ -287,7 +319,7 @@ export function finalizeOsint(
     matched_indicators: matched,
     watchlist_candidates: candidates,
     evidence: base.evidence,
-    tool_runs: toolRuns,
+    tool_runs: dedupedRuns,
     unavailable_sources,
     notes_for_user: notes,
   };

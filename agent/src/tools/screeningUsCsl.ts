@@ -33,7 +33,7 @@ export function makeScreeningUsCslTool(ctx: ToolContext): OsintTool {
       const res = await fetchJson(url, { headers: { "subscription-key": ctx.tradeGovKey } }, 9000);
       if (res.error) return errored(TOOL, res.error);
       if (!res.ok || typeof res.data !== "object" || res.data === null) {
-        return unavailable(TOOL, `Trade.gov HTTP ${res.status}`);
+        return errored(TOOL, `Trade.gov HTTP ${res.status}`);
       }
       const results = (res.data as { results?: CslResult[] }).results ?? [];
       if (results.length === 0) {

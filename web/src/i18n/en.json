@@ -108,13 +108,13 @@
     "pending": "Awaiting human confirmation",
     "evidenceHeading": "Evidence (with sources)",
     "sourceLink": "source",
-    "unavailable": "Unavailable sources: {{sources}} (no evidence ≠ innocence)",
+    "unavailable": "Not queried (no key / failed): {{sources}} — this is the absence of a query, not evidence of innocence",
     "sourcesHeading": "Per-source results ({{count}})",
     "statusOk": "fetched OK",
     "statusHits": "{{n}} candidate(s)",
-    "statusNoMatch": "no match",
-    "statusUnavailable": "unavailable",
-    "statusError": "error",
+    "statusNoMatch": "no match (queried OK)",
+    "statusUnavailable": "not queried (no key)",
+    "statusError": "query failed",
     "notesForUser": "Notes"
   },
   "recall": {

@@ -26,7 +26,7 @@ export function makeCorpJpAuxTool(ctx: ToolContext): OsintTool {
       const res = await fetchJson(url, { headers: { "X-hojinInfo-api-token": ctx.gbizToken } }, 9000);
       if (res.error) return errored(TOOL, res.error);
       if (!res.ok || typeof res.data !== "object" || res.data === null) {
-        return unavailable(TOOL, `gBizINFO HTTP ${res.status}`);
+        return errored(TOOL, `gBizINFO HTTP ${res.status}`);
       }
       const infos = (res.data as { "hojin-infos"?: unknown[] })["hojin-infos"] ?? [];
       if (infos.length === 0) return noMatch(TOOL, { source_url: url, citation: "gBizINFO" });

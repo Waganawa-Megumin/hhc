@@ -79,6 +79,13 @@ describe("sanctions_opensanctions (F)", () => {
     expect((await tool.run({ name: "X" })).status).toBe("unavailable");
   });
 
+  it("configured but HTTP failure → 'error', NOT 'unavailable' (queried-and-failed ≠ not-configured)", async () => {
+    mockFetch("unauthorized", { ok: false, status: 401 });
+    const tool = mk(ctx({ openSanctionsApiKey: "k" }));
+    expect(tool.available).toBe(true);
+    expect((await tool.run({ name: "Acme" })).status).toBe("error");
+  });
+
   it("self-hosted yente needs no key and maps scores to F1/F3 (pending confirmation)", async () => {
     mockFetch({
       responses: {

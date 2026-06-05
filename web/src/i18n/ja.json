@@ -108,13 +108,13 @@
     "pending": "人間の確認待ち",
     "evidenceHeading": "根拠（出典付き）",
     "sourceLink": "出典",
-    "unavailable": "利用できなかったソース: {{sources}}（証拠なし＝無実ではありません）",
+    "unavailable": "未取得のソース（未設定／照会失敗）: {{sources}} ※照会できていないだけで、無実の証拠ではありません",
     "sourcesHeading": "ソース別チェック結果（{{count}}件）",
     "statusOk": "取得OK",
     "statusHits": "{{n}}件の候補",
-    "statusNoMatch": "該当なし",
-    "statusUnavailable": "利用不可",
-    "statusError": "エラー",
+    "statusNoMatch": "該当なし（照会済み）",
+    "statusUnavailable": "未照会（未設定・要キー）",
+    "statusError": "照会失敗（エラー）",
     "notesForUser": "メモ"
   },
   "recall": {

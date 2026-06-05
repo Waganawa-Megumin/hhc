@@ -235,13 +235,15 @@ button .spinner { margin-right: 0.4rem; }
 .src-line { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.86rem; flex-wrap: wrap; }
 .src-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--muted); }
 .run-ok .src-dot { background: #74d99f; }
-.run-no_match .src-dot { background: var(--muted); }
-.run-unavailable .src-dot, .run-error .src-dot { background: var(--mid); }
+.run-no_match .src-dot { background: #6ea8fe; }       /* queried OK, nothing found */
+.run-unavailable .src-dot { background: var(--muted); } /* not configured (no key) */
+.run-error .src-dot { background: var(--mid); }       /* queried but failed */
 .src-name { font-family: ui-monospace, monospace; font-size: 0.8rem; color: var(--text); }
 .src-status { font-weight: 600; }
 .run-ok .src-status { color: #74d99f; }
-.run-unavailable .src-status, .run-error .src-status { color: var(--mid); }
-.run-no_match .src-status { color: var(--muted); }
+.run-no_match .src-status { color: #6ea8fe; }
+.run-unavailable .src-status { color: var(--muted); }
+.run-error .src-status { color: var(--mid); }
 .src-cite { flex-basis: 100%; padding-left: 1.2rem; }
 
 /* §5-1 known-subject recall */

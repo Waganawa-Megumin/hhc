@@ -68,7 +68,10 @@ export function makeOpenSanctionsTool(
       );
       if (res.error) return errored(opts.name, res.error);
       if (!res.ok || typeof res.data !== "object" || res.data === null) {
-        return unavailable(opts.name, `OpenSanctions HTTP ${res.status}`);
+        // Configured but the request failed (bad key → 401/403, rate limit, 5xx).
+        // This is an ERROR, not "unavailable": the source WAS queried and failed,
+        // which is distinct from "not configured" and from "queried, no match".
+        return errored(opts.name, `OpenSanctions HTTP ${res.status}`);
       }
       const results =
         ((res.data as { responses?: { q1?: { results?: OsResult[] } } }).responses?.q1?.results ?? []);

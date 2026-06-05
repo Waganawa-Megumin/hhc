@@ -32,13 +32,26 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/** Minimal, safe Markdown → HTML for the report subset (escapes first). */
+const inlineMd = (s: string) =>
+  escapeHtml(s)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+
+/** A GFM table separator row, e.g. `| --- | :--: |`. */
+const isTableSep = (line: string) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line);
+const isTableRow = (line: string) => line.includes("|") && line.trim().length > 0;
+function splitTableCells(row: string): string[] {
+  let s = row.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
+  return s.split(/(?<!\\)\|/).map((c) => c.replace(/\\\|/g, "|").trim());
+}
+
+/** Minimal, safe Markdown → HTML for the report subset (escapes first): headings,
+ * bullet lists, GFM pipe tables, horizontal rules, and paragraphs. */
 function mdToHtml(md: string): string {
-  const inline = (s: string) =>
-    escapeHtml(s)
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  const lines = md.split(/\r?\n/);
   let html = "";
   let inList = false;
   let inPara = false;
@@ -54,8 +67,33 @@ function mdToHtml(md: string): string {
       inList = false;
     }
   };
-  for (const raw of md.split(/\r?\n/)) {
-    const line = raw.trimEnd();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!.trimEnd();
+
+    // GFM table: a header row immediately followed by a separator row.
+    if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1]!)) {
+      closePara();
+      closeList();
+      const header = splitTableCells(line);
+      let j = i + 2;
+      const rows: string[][] = [];
+      while (j < lines.length && isTableRow(lines[j]!) && !isTableSep(lines[j]!)) {
+        rows.push(splitTableCells(lines[j]!));
+        j++;
+      }
+      html += "<table><thead><tr>";
+      for (const c of header) html += `<th>${inlineMd(c)}</th>`;
+      html += "</tr></thead><tbody>";
+      for (const r of rows) {
+        html += "<tr>";
+        for (const c of r) html += `<td>${inlineMd(c)}</td>`;
+        html += "</tr>";
+      }
+      html += "</tbody></table>";
+      i = j - 1;
+      continue;
+    }
+
     if (!line.trim()) {
       closePara();
       closeList();
@@ -66,7 +104,7 @@ function mdToHtml(md: string): string {
       closePara();
       closeList();
       const lvl = h[1]!.length;
-      html += `<h${lvl}>${inline(h[2]!)}</h${lvl}>`;
+      html += `<h${lvl}>${inlineMd(h[2]!)}</h${lvl}>`;
       continue;
     }
     const li = /^[-*]\s+(.*)$/.exec(line);
@@ -76,7 +114,7 @@ function mdToHtml(md: string): string {
         html += "<ul>";
         inList = true;
       }
-      html += `<li>${inline(li[1]!)}</li>`;
+      html += `<li>${inlineMd(li[1]!)}</li>`;
       continue;
     }
     if (/^---+$/.test(line)) {
@@ -92,7 +130,7 @@ function mdToHtml(md: string): string {
     } else {
       html += "<br/>";
     }
-    html += inline(line);
+    html += inlineMd(line);
   }
   closePara();
   closeList();
@@ -113,7 +151,7 @@ function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
 <style>
   :root { color-scheme: light; }
   body { font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; color: #1a1a1a; margin: 32px; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .rpt-banner { width: 100%; height: auto; border-radius: 10px; display: block; }
+  .rpt-banner { width: 280px; max-width: 48%; height: auto; border-radius: 8px; display: block; margin-bottom: 6px; }
   .rpt-banner-fallback { display: none; align-items: center; gap: 12px; border-bottom: 3px solid #3b6fd4; padding-bottom: 10px; }
   .rpt-banner-fallback img { width: 44px; height: 44px; }
   .rpt-meta { color: #555; font-size: 12px; margin: 12px 0 18px; }
@@ -124,6 +162,10 @@ function openPrintWindow(entry: ReportEntry, lang: "ja" | "en"): boolean {
   h1,h2,h3 { line-height: 1.3; } h2 { font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 20px; } h3 { font-size: 14px; }
   code { background: #f0f2f7; padding: 0 3px; border-radius: 3px; font-size: 90%; }
   ul { margin: 6px 0; } a { color: #2a5db0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12px; }
+  th, td { border: 1px solid #cbd2e0; padding: 5px 9px; text-align: left; vertical-align: top; }
+  th { background: #eef1f7; font-weight: 700; }
+  tbody tr:nth-child(even) { background: #f7f8fb; }
   footer { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 8px; color: #777; font-size: 11px; }
   @media print { body { margin: 12mm; } }
 </style></head>

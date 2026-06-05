@@ -30,7 +30,7 @@ export function makeCorpGlobalTool(ctx: ToolContext): OsintTool {
       const res = await fetchJson(url, {}, 9000);
       if (res.error) return errored(TOOL, res.error);
       if (!res.ok || typeof res.data !== "object" || res.data === null) {
-        return unavailable(TOOL, `OpenCorporates HTTP ${res.status}`);
+        return errored(TOOL, `OpenCorporates HTTP ${res.status}`);
       }
       const companies = (res.data as { results?: { companies?: OcCompany[] } }).results?.companies ?? [];
       if (companies.length === 0) return noMatch(TOOL, { source_url: "https://opencorporates.com/", citation: "OpenCorporates" });

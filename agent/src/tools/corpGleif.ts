@@ -41,7 +41,7 @@ export function makeCorpGleifTool(ctx: ToolContext): OsintTool {
       const res = await fetchJson(url, { headers: { accept: "application/vnd.api+json" } }, 9000);
       if (res.error) return errored(TOOL, res.error);
       if (!res.ok || typeof res.data !== "object" || res.data === null) {
-        return unavailable(TOOL, `GLEIF HTTP ${res.status}`);
+        return errored(TOOL, `GLEIF HTTP ${res.status}`);
       }
       const records = (res.data as { data?: LeiRecord[] }).data ?? [];
       if (records.length === 0) {

@@ -28,7 +28,7 @@ export function makeCorpJpTool(ctx: ToolContext): OsintTool {
         `&name=${encodeURIComponent(name)}&type=12&mode=2`;
       const res = await fetchJson(url, {}, 9000);
       if (res.error) return errored(TOOL, res.error);
-      if (!res.ok) return unavailable(TOOL, `NTA HTTP ${res.status}`);
+      if (!res.ok) return errored(TOOL, `NTA HTTP ${res.status}`);
       const text = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
       const lines = text.split("\n").filter((l) => l.trim().length > 0);
       // First CSV line is a count header; >1 line implies at least one match.

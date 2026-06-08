@@ -195,6 +195,30 @@ None affect the shipped web bundle or the agent backend. Clearing them requires 
 vite 8 + vitest 4 major upgrade; tracked separately to avoid destabilising the
 build.
 
+## Documentation
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and **general deployment
+  requirements** (what to provide beyond API keys: the embedded encrypted DB, SMTP for
+  email, TLS reverse proxy for real client IP, SIEM, scaling limits).
+- [`docs/管理者ガイド.md`](docs/管理者ガイド.md) — **administrator guide** (enabling auth,
+  inviting users, MFA, roles, the audit log: retention / export / SIEM, backup, troubleshooting).
+- [`docs/起動ガイド.md`](docs/起動ガイド.md) — Codespaces launch / update / troubleshooting guide (JA).
+
+## Support
+
+If HHC is useful to you, you can support development here: **<https://ko-fi.com/shonanboyeah>** 🙏
+
 ## License
 
-Personal, non-commercial use. See the design spec for scope.
+**PolyForm Noncommercial License 1.0.0** — see [`LICENSE`](LICENSE)
+(SPDX: `PolyForm-Noncommercial-1.0.0`).
+
+HHC is **source-available and free for noncommercial use** — personal use, research and
+education, and noncommercial / charitable / government / public-safety organizations may
+use, modify, and self-host it freely. **Commercial use requires a separate license** from
+the copyright holder (contact via the support link above). This summary is not legal
+advice; the `LICENSE` text governs.
+
+> Why this license: it keeps HHC openly usable for defenders and researchers while
+> reserving commercial rights to the author. If a time-delayed open-source model is ever
+> preferred instead, the Business Source License (BUSL-1.1) is a drop-in alternative.

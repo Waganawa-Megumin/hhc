@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "HHC (Human Hunter Check) — a local-first self-triage tool to assess whether a job/headhunting approach is a foreign-intelligence recruitment attempt. Outputs a risk band + recommended action; never a verdict.",
-  "license": "SEE LICENSE — personal, non-commercial use",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "workspaces": [
     "shared",
     "web",

@@ -35,6 +35,7 @@ import {
   adminSetRole,
   adminSetStatus,
 } from "./users";
+import { queryAudit, summarizeAudit } from "../db/auditStore";
 import { toPublicUser } from "./types";
 import { env } from "../env";
 
@@ -332,5 +333,29 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
       const code = msg === "last_admin" ? 409 : msg === "not_found" ? 404 : 400;
       return reply.code(code).send({ error: msg });
     }
+  });
+
+  // ── audit log (Phase 2) ─────────────────────────────────────────────────────
+  const AuditQuerySchema = z.object({
+    from: z.string().optional(),
+    to: z.string().optional(),
+    userId: z.string().optional(),
+    email: z.string().optional(),
+    action: z.string().optional(),
+    status: z.coerce.number().int().optional(),
+    limit: z.coerce.number().int().optional(),
+    offset: z.coerce.number().int().optional(),
+  });
+
+  api.get("/admin/audit", adminOnly, async (req, reply) => {
+    const parsed = AuditQuerySchema.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    return reply.send({ ok: true, ...queryAudit(getDb(), parsed.data) });
+  });
+
+  api.get("/admin/audit/summary", adminOnly, async (req, reply) => {
+    const parsed = AuditQuerySchema.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    return reply.send({ ok: true, summary: summarizeAudit(getDb(), parsed.data) });
   });
 }

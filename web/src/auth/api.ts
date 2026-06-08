@@ -61,4 +61,31 @@ export const authApi = {
     id: string,
     body: { action: "set-role" | "set-status" | "reset-password" | "force-mfa"; role?: Role; status?: "active" | "disabled" },
   ) => req<{ initialPassword?: string }>("PATCH", `/api/admin/users/${id}`, body),
+
+  adminAudit: (qs: string) =>
+    req<{ rows: AuditRow[]; total: number; limit: number; offset: number }>("GET", `/api/admin/audit${qs}`),
+  adminAuditSummary: (qs: string) => req<{ summary: AuditSummary }>("GET", `/api/admin/audit/summary${qs}`),
 };
+
+export interface AuditRow {
+  id: number;
+  ts: string;
+  user_id: string | null;
+  email: string | null;
+  action: string;
+  route: string;
+  method: string;
+  status: number;
+  ip: string | null;
+  user_agent: string | null;
+  geo_country: string | null;
+  geo_region: string | null;
+  geo_city: string | null;
+  geo_status: string | null;
+}
+export interface AuditSummary {
+  total: number;
+  byAction: { action: string; count: number }[];
+  byDay: { day: string; count: number }[];
+  failedLogins: number;
+}

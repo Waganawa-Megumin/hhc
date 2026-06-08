@@ -16,6 +16,7 @@ import { recall, recordInquiry, getStatsRows } from "./db/store";
 import { exportCaseArmored, importCaseArmored } from "./db/exportImport";
 import { generateReport, type ReportRequest } from "./anthropic/report";
 import { makeAuthOnRequest } from "./auth/hook";
+import { makeAuditOnResponse } from "./audit/hook";
 import { registerAuthRoutes, registerAdminRoutes } from "./auth/routes";
 import { bootstrapAdmin } from "./auth/users";
 
@@ -270,7 +271,10 @@ export function buildServer(opts: BuildServerOpts = {}): FastifyInstance {
 
   void app.register(
     async (api) => {
-      if (isAuthEnabled()) api.addHook("onRequest", makeAuthOnRequest(getDbHandle));
+      if (isAuthEnabled()) {
+        api.addHook("onRequest", makeAuthOnRequest(getDbHandle));
+        api.addHook("onResponse", makeAuditOnResponse(getDbHandle)); // §audit (Phase 2)
+      }
       registerFeatureRoutes(api);
       if (isAuthEnabled()) {
         registerAuthRoutes(api, getDbHandle);

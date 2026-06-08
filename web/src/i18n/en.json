@@ -245,6 +245,25 @@
     "forceMfa": "Reset MFA",
     "initialPasswordFor": "Initial password for {{email}}",
     "initialPasswordHint": "Shown only here — share it securely with the user (they must change it at first sign-in).",
-    "lastAdminWarning": "You cannot disable or demote the last active admin."
+    "lastAdminWarning": "You cannot disable or demote the last active admin.",
+    "audit": {
+      "total": "Total events",
+      "failedLogins": "Failed logins",
+      "topActions": "Top actions",
+      "from": "From",
+      "to": "To",
+      "action": "Action",
+      "apply": "Apply",
+      "clear": "Clear",
+      "time": "Time",
+      "user": "User",
+      "status": "Status",
+      "ip": "Source IP",
+      "location": "Location",
+      "agent": "User-Agent",
+      "empty": "No matching audit events.",
+      "prev": "Prev",
+      "next": "Next"
+    }
   }
 }

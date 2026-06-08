@@ -245,6 +245,25 @@
     "forceMfa": "MFA再登録",
     "initialPasswordFor": "{{email}} の初期パスワード",
     "initialPasswordHint": "この画面でのみ表示されます。本人に安全に共有してください（初回ログインで変更が必要）。",
-    "lastAdminWarning": "最後の有効な管理者を無効化・降格することはできません。"
+    "lastAdminWarning": "最後の有効な管理者を無効化・降格することはできません。",
+    "audit": {
+      "total": "総イベント数",
+      "failedLogins": "失敗ログイン",
+      "topActions": "主な操作",
+      "from": "開始日",
+      "to": "終了日",
+      "action": "操作",
+      "apply": "適用",
+      "clear": "クリア",
+      "time": "日時",
+      "user": "ユーザー",
+      "status": "ステータス",
+      "ip": "アクセス元IP",
+      "location": "ロケーション",
+      "agent": "User-Agent",
+      "empty": "該当する操作ログはありません。",
+      "prev": "前へ",
+      "next": "次へ"
+    }
   }
 }

@@ -34,7 +34,9 @@
     "none": "まだ何も選択されていません。",
     "weightUnit": "点",
     "uncounted": "非加点",
-    "coefficient": "係数"
+    "coefficient": "係数",
+    "legend": "凡例（スコア帯）",
+    "overrideNote": "クリティカル指標（D3単独／C2＋D1／人間確認F1）が発動すると、点数に関わらず「高」へ強制昇格します。"
   },
   "action": {
     "heading": "推奨アクション"

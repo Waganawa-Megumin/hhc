@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { BAND_GUIDANCE, CRITICAL_OVERRIDES, indicatorById, type ScoreResult } from "@hhc/shared";
+import { BAND_GUIDANCE, BAND_ORDER, BANDS, CRITICAL_OVERRIDES, indicatorById, type Band, type ScoreResult } from "@hhc/shared";
 import { useLang } from "../i18n";
 
 export function ScorePanel({ result }: { result: ScoreResult }) {
@@ -10,6 +10,15 @@ export function ScorePanel({ result }: { result: ScoreResult }) {
   const overrideLabel = (id: string): string => {
     const ov = CRITICAL_OVERRIDES.find((o) => o.id === id);
     return ov ? ov.label[lang] : id;
+  };
+
+  // Band ranges straight from the KB thresholds, so the legend can't drift from scoring.
+  const lowMax = BANDS.low.max ?? 5;
+  const midMax = BANDS.mid.max ?? 12;
+  const bandRange: Record<Band, string> = {
+    low: `0–${lowMax}`,
+    mid: `${lowMax + 1}–${midMax}`,
+    high: `${midMax + 1}+`,
   };
 
   const hasSelection = result.contributing.length > 0 || result.criticalFlags.length > 0;
@@ -40,6 +49,20 @@ export function ScorePanel({ result }: { result: ScoreResult }) {
           ) : null}
         </div>
       </div>
+
+      <div className="band-legend">
+        <span className="legend-label">{t("score.legend")}</span>
+        {BAND_ORDER.map((b) => (
+          <span
+            key={b}
+            className={`legend-chip band-${b}${b === result.band ? " current" : ""}`}
+            aria-current={b === result.band ? "true" : undefined}
+          >
+            {BAND_GUIDANCE[b].label[lang]} <span className="legend-range">{bandRange[b]}</span>
+          </span>
+        ))}
+      </div>
+      <p className="muted small legend-note">★ {t("score.overrideNote")}</p>
 
       {result.criticalFlags.length > 0 ? (
         <div className="critical-flags">

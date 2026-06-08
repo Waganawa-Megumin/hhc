@@ -34,7 +34,9 @@
     "none": "Nothing selected yet.",
     "weightUnit": "pts",
     "uncounted": "not scored",
-    "coefficient": "coefficient"
+    "coefficient": "coefficient",
+    "legend": "Legend (score bands)",
+    "overrideNote": "A critical indicator (D3 alone / C2+D1 / human-confirmed F1) forces “high” regardless of the score."
   },
   "action": {
     "heading": "Recommended action"

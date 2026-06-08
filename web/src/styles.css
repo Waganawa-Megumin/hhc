@@ -117,6 +117,20 @@ h2 { font-size: 1.05rem; margin: 0.5rem 0; }
 .band-badge.band-mid { background: rgba(217,161,58,0.2); color: var(--mid); }
 .band-badge.band-high { background: rgba(229,83,75,0.2); color: var(--high); }
 
+/* Score-band legend: shows which score ranges map to low / mid / high. */
+.band-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin: 0.6rem 0 0.2rem; }
+.legend-label { font-size: 0.8rem; color: var(--muted); margin-right: 0.1rem; }
+.legend-chip { font-size: 0.8rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); opacity: 0.7; }
+.legend-chip .legend-range { font-variant-numeric: tabular-nums; font-weight: 700; }
+.legend-chip.band-low { color: #c2c7da; }
+.legend-chip.band-mid { color: var(--mid); }
+.legend-chip.band-high { color: var(--high); }
+.legend-chip.current { opacity: 1; border-width: 2px; }
+.legend-chip.current.band-low { background: rgba(107,114,128,0.25); border-color: var(--low); }
+.legend-chip.current.band-mid { background: rgba(217,161,58,0.2); border-color: var(--mid); }
+.legend-chip.current.band-high { background: rgba(229,83,75,0.2); border-color: var(--high); }
+.legend-note { margin: 0 0 0.2rem; }
+
 .score-numbers { display: flex; gap: 1rem; align-items: center; margin: 0.6rem 0; }
 .score-num { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
 .score-num .num { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }

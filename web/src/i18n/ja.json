@@ -271,7 +271,11 @@
       "agent": "User-Agent",
       "empty": "該当する操作ログはありません。",
       "prev": "前へ",
-      "next": "次へ"
+      "next": "次へ",
+      "catAll": "すべて",
+      "catAuth": "認証",
+      "catOperation": "操作",
+      "catAdmin": "管理"
     }
   },
   "invite": {

@@ -88,6 +88,7 @@ export interface AuditRow {
   geo_city: string | null;
   geo_status: string | null;
   detail: string | null;
+  category: string | null;
 }
 export interface AuditSummary {
   total: number;

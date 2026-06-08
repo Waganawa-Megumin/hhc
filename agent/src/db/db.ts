@@ -24,6 +24,7 @@ function migrate(db: DB): void {
     }
   };
   addColumn("ALTER TABLE audit_logs ADD COLUMN detail TEXT");
+  addColumn("ALTER TABLE audit_logs ADD COLUMN category TEXT");
 }
 
 export function dbFilePath(): string {

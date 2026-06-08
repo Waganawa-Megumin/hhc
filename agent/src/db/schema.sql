@@ -113,7 +113,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   geo_region  TEXT,
   geo_city    TEXT,
   geo_status  TEXT,            -- 'ok' | 'unavailable' | 'error'
-  detail      TEXT             -- safe, non-sensitive operation summary (no bodies/secrets)
+  detail      TEXT,            -- safe operation summary incl. the search query (no bodies/secrets)
+  category    TEXT             -- 'auth' | 'operation' | 'admin' (for separate views)
 );
 
 -- Invitations: an admin "adds" a user → an emailed setup link (no initial password).

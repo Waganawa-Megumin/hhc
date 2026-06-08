@@ -271,7 +271,11 @@
       "agent": "User-Agent",
       "empty": "No matching audit events.",
       "prev": "Prev",
-      "next": "Next"
+      "next": "Next",
+      "catAll": "All",
+      "catAuth": "Auth",
+      "catOperation": "Operations",
+      "catAdmin": "Admin"
     }
   },
   "invite": {

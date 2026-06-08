@@ -18,16 +18,18 @@ export interface AuditRow {
   geo_region: string | null;
   geo_city: string | null;
   geo_status: string | null;
-  /** Safe, non-sensitive operation summary (e.g. "company=… domain=…"); never bodies. */
+  /** Safe operation summary incl. the search query (e.g. "company=… person=…"); never bodies. */
   detail: string | null;
+  /** 'auth' | 'operation' | 'admin' — lets the dashboard show separate sections. */
+  category: string | null;
 }
 
 export function recordAudit(db: DB, row: AuditRow): void {
   assertNoDemographicScoringFields(row, "audit log");
   db.prepare(
     `INSERT INTO audit_logs
-       (ts, user_id, email, action, route, method, status, ip, user_agent, geo_country, geo_region, geo_city, geo_status, detail)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (ts, user_id, email, action, route, method, status, ip, user_agent, geo_country, geo_region, geo_city, geo_status, detail, category)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     row.ts,
     row.user_id,
@@ -43,6 +45,7 @@ export function recordAudit(db: DB, row: AuditRow): void {
     row.geo_city,
     row.geo_status,
     row.detail,
+    row.category,
   );
 }
 
@@ -53,6 +56,7 @@ export interface AuditQuery {
   email?: string;
   action?: string;
   status?: number;
+  category?: string;
   limit?: number;
   offset?: number;
 }
@@ -86,6 +90,10 @@ function whereClause(q: AuditQuery): { sql: string; args: unknown[] } {
   if (q.action) {
     where.push("action = ?");
     args.push(q.action);
+  }
+  if (q.category) {
+    where.push("category = ?");
+    args.push(q.category);
   }
   if (typeof q.status === "number") {
     where.push("status = ?");

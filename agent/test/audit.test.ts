@@ -44,6 +44,7 @@ describe("audit log (onResponse hook)", () => {
     expect(rows[0]!.status).toBe(200);
     expect(rows[0]!.user_id).toBe(u.user_id);
     expect(rows[0]!.ip).toBeTruthy();
+    expect(rows[0]!.category).toBe("operation");
     await app.close();
   });
 
@@ -57,6 +58,7 @@ describe("audit log (onResponse hook)", () => {
     expect(rows.length).toBe(1);
     expect(rows[0]!.status).toBe(401);
     expect(rows[0]!.user_id).toBeNull();
+    expect(rows[0]!.category).toBe("auth");
     // The row carries only metadata columns — the password can't be anywhere in it.
     expect(JSON.stringify(rows[0]).includes("WRONGPASSWORD")).toBe(false);
     await app.close();

@@ -11,8 +11,11 @@ interface Filters {
   email: string;
 }
 
-function buildQuery(f: Filters, offset: number): string {
+type Category = "" | "auth" | "operation" | "admin";
+
+function buildQuery(f: Filters, offset: number, category: Category): string {
   const p = new URLSearchParams();
+  if (category) p.set("category", category);
   if (f.from) p.set("from", `${f.from}T00:00:00.000Z`);
   if (f.to) p.set("to", `${f.to}T23:59:59.999Z`);
   if (f.action.trim()) p.set("action", f.action.trim());
@@ -34,6 +37,7 @@ export default function AuditPage() {
   const [filters, setFilters] = useState<Filters>({ from: "", to: "", action: "", email: "" });
   const [applied, setApplied] = useState<Filters>({ from: "", to: "", action: "", email: "" });
   const [offset, setOffset] = useState(0);
+  const [category, setCategory] = useState<Category>("");
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [total, setTotal] = useState(0);
   const [summary, setSummary] = useState<AuditSummary | null>(null);
@@ -43,19 +47,24 @@ export default function AuditPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const qs = buildQuery(applied, offset);
-    const [list, sum] = await Promise.all([authApi.adminAudit(qs), authApi.adminAuditSummary(buildQuery(applied, 0))]);
+    const qs = buildQuery(applied, offset, category);
+    const [list, sum] = await Promise.all([authApi.adminAudit(qs), authApi.adminAuditSummary(buildQuery(applied, 0, category))]);
     if (list.ok) {
       setRows(list.data.rows);
       setTotal(list.data.total);
     } else setError(list.data.error ?? "error");
     if (sum.ok) setSummary(sum.data.summary);
     setLoading(false);
-  }, [applied, offset]);
+  }, [applied, offset, category]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  function pickCategory(c: Category) {
+    setOffset(0);
+    setCategory(c);
+  }
 
   function apply() {
     setOffset(0);
@@ -65,6 +74,24 @@ export default function AuditPage() {
   return (
     <section className="admin-audit">
       <h2>{t("admin.auditTitle")}</h2>
+
+      <div className="audit-cats">
+        {([
+          ["", "catAll"],
+          ["auth", "catAuth"],
+          ["operation", "catOperation"],
+          ["admin", "catAdmin"],
+        ] as [Category, string][]).map(([c, key]) => (
+          <button
+            key={key}
+            type="button"
+            className={`audit-cat${category === c ? " active" : ""}`}
+            onClick={() => pickCategory(c)}
+          >
+            {t(`admin.audit.${key}`)}
+          </button>
+        ))}
+      </div>
 
       {summary ? (
         <div className="audit-summary">

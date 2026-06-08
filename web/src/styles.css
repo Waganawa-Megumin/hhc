@@ -334,6 +334,9 @@ button .spinner { margin-right: 0.4rem; }
 .audit-detail { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Audit dashboard ──────────────────────────────────────────────────────── */
+.audit-cats { display: flex; gap: 0.3rem; margin: 0.4rem 0 0.6rem; flex-wrap: wrap; }
+.audit-cat { padding: 0.25rem 0.8rem; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); cursor: pointer; font-size: 0.85rem; }
+.audit-cat.active { background: rgba(110,168,254,0.18); border-color: var(--accent); color: var(--text); font-weight: 700; }
 .audit-summary { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0 0.8rem; }
 .audit-stat { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
 .audit-stat-n { font-size: 1.4rem; font-weight: 800; }

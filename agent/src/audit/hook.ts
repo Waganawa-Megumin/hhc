@@ -37,6 +37,17 @@ const ACTION_MAP: Record<string, string> = {
 // High-frequency / low-value paths we skip to keep the log signal-rich.
 const SKIP = new Set(["GET /api/health", "GET /api/auth/me", "GET /api/osint/:jobId"]);
 
+// Category lets the dashboard show auth vs operation vs admin as separate sections.
+const AUTH_ACTIONS = new Set([
+  "login", "login.mfa", "login.mfa.resend", "logout", "password.change", "mfa.enroll", "mfa.send", "mfa.confirm", "invite.accept",
+]);
+const ADMIN_ACTIONS = new Set(["user.list", "user.create", "user.update", "audit.view", "audit.summary"]);
+function categoryFor(action: string): "auth" | "admin" | "operation" {
+  if (AUTH_ACTIONS.has(action)) return "auth";
+  if (ADMIN_ACTIONS.has(action)) return "admin";
+  return "operation"; // interpret / osint / report / inquiry / export / import / recall / stats
+}
+
 function trunc(s: string, n = 80): string {
   return s.length > n ? `${s.slice(0, n)}…` : s;
 }
@@ -50,11 +61,16 @@ function safeDetail(key: string, req: FastifyRequest): string | null {
       case "POST /api/auth/login":
       case "POST /api/auth/change-password":
         return typeof body.email === "string" ? `email=${trunc(body.email)}` : null;
-      case "POST /api/osint": {
+      case "POST /api/osint":
+      case "POST /api/subject/recall": {
+        // The processed search query sent to the external sources / case DB — this is
+        // "what was searched" (not the pasted text). Recorded for the audit trail.
         const parts: string[] = [];
         if (body.company) parts.push(`company="${trunc(String(body.company), 60)}"`);
         if (body.domain) parts.push(`domain=${trunc(String(body.domain), 60)}`);
-        return parts.join(" ") || null; // person/title omitted (PII)
+        if (body.person) parts.push(`person="${trunc(String(body.person), 60)}"`);
+        if (body.title) parts.push(`title="${trunc(String(body.title), 40)}"`);
+        return parts.join(" ") || null;
       }
       case "POST /api/report": {
         const a = (body.assessment ?? {}) as Record<string, unknown>;
@@ -102,11 +118,13 @@ export function makeAuditOnResponse(getDb: () => DB) {
 
       const ip = req.ip ?? null;
       const geo = await geoLookup(ip);
+      const action = ACTION_MAP[key] ?? key;
       recordAudit(getDb(), {
         ts: new Date().toISOString(),
         user_id: req.auth?.userId ?? null,
         email: req.auth?.email ?? null,
-        action: ACTION_MAP[key] ?? key,
+        action,
+        category: categoryFor(action),
         route: routePattern,
         method: req.method,
         status: reply.statusCode,

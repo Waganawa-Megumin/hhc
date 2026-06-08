@@ -388,6 +388,7 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
     userId: z.string().optional(),
     email: z.string().optional(),
     action: z.string().optional(),
+    category: z.enum(["auth", "operation", "admin"]).optional(),
     status: z.coerce.number().int().optional(),
     limit: z.coerce.number().int().optional(),
     offset: z.coerce.number().int().optional(),

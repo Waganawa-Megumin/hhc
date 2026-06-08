@@ -43,6 +43,7 @@ export default function AuditPage() {
   const [summary, setSummary] = useState<AuditSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ retentionDays: number; siem: boolean } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,10 +53,13 @@ export default function AuditPage() {
     if (list.ok) {
       setRows(list.data.rows);
       setTotal(list.data.total);
+      setMeta({ retentionDays: list.data.retentionDays, siem: list.data.siem });
     } else setError(list.data.error ?? "error");
     if (sum.ok) setSummary(sum.data.summary);
     setLoading(false);
   }, [applied, offset, category]);
+
+  const exportHref = (fmt: "csv" | "json") => `/api/admin/audit/export${buildQuery(applied, 0, category)}&format=${fmt}`;
 
   useEffect(() => {
     void load();
@@ -155,6 +159,20 @@ export default function AuditPage() {
         >
           {t("admin.audit.clear")}
         </button>
+      </div>
+
+      <div className="audit-export">
+        <span className="muted small">
+          {meta ? t("admin.audit.retention", { days: meta.retentionDays }) : ""}
+          {meta?.siem ? ` · ${t("admin.audit.siemOn")}` : ""}
+        </span>
+        <span className="spacer" />
+        <a className="ghost-link small" href={exportHref("csv")}>
+          {t("admin.audit.exportCsv")}
+        </a>
+        <a className="ghost-link small" href={exportHref("json")}>
+          {t("admin.audit.exportJson")}
+        </a>
       </div>
 
       {error ? <p className="warn small">{error}</p> : null}

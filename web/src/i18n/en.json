@@ -275,7 +275,11 @@
       "catAll": "All",
       "catAuth": "Auth",
       "catOperation": "Operations",
-      "catAdmin": "Admin"
+      "catAdmin": "Admin",
+      "exportCsv": "Export CSV",
+      "exportJson": "Export JSON",
+      "retention": "Retention: {{days}} days (auto-deleted)",
+      "siemOn": "SIEM forwarding: on"
     }
   },
   "invite": {

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "../src/server";
 import { openTestDb, type DB } from "../src/db/db";
 import * as store from "../src/db/authStore";
-import { queryAudit } from "../src/db/auditStore";
+import { queryAudit, purgeOldAudit, recordAudit, auditToCsv, type AuditRow } from "../src/db/auditStore";
 import { hashPassword } from "../src/auth/passwords";
 import { newSessionToken, absoluteExpiry } from "../src/auth/sessions";
 
@@ -72,5 +72,45 @@ describe("audit log (onResponse hook)", () => {
     const { rows } = queryAudit(db, {});
     expect(rows.some((r) => r.route === "/api/health")).toBe(false);
     await app.close();
+  });
+});
+
+describe("audit retention + export", () => {
+  const baseRow = (ts: string, action: string): AuditRow => ({
+    ts,
+    user_id: null,
+    email: "x@y.co",
+    action,
+    category: "operation",
+    route: "/api/osint",
+    method: "POST",
+    status: 200,
+    ip: "1.2.3.4",
+    user_agent: "UA",
+    geo_country: null,
+    geo_region: null,
+    geo_city: null,
+    geo_status: "unavailable",
+    detail: 'company="ARK"',
+  });
+
+  it("purges rows older than the retention window, keeps recent ones", () => {
+    const db = openTestDb();
+    recordAudit(db, baseRow("2000-01-01T00:00:00.000Z", "old"));
+    recordAudit(db, baseRow(new Date().toISOString(), "new"));
+    expect(purgeOldAudit(db, 30)).toBe(1);
+    const { rows, total } = queryAudit(db, {});
+    expect(total).toBe(1);
+    expect(rows[0]!.action).toBe("new");
+    expect(purgeOldAudit(db, 0)).toBe(0); // 0 = keep forever
+  });
+
+  it("exports CSV with a header and no raw secrets", () => {
+    const db = openTestDb();
+    recordAudit(db, baseRow(new Date().toISOString(), "osint"));
+    const { rows } = queryAudit(db, {});
+    const csv = auditToCsv(rows);
+    expect(csv.split("\n")[0]).toContain("ts,category,action");
+    expect(csv).toContain('company=""ARK""'); // quoted detail, CSV-escaped
   });
 });

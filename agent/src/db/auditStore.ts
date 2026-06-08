@@ -105,12 +105,34 @@ function whereClause(q: AuditQuery): { sql: string; args: unknown[] } {
 export function queryAudit(db: DB, q: AuditQuery = {}): AuditPage {
   const { sql, args } = whereClause(q);
   const total = (db.prepare(`SELECT COUNT(*) AS n FROM audit_logs ${sql}`).get(...args) as { n: number }).n;
-  const limit = Math.min(Math.max(q.limit ?? 100, 1), 500);
+  const limit = Math.min(Math.max(q.limit ?? 100, 1), 10000);
   const offset = Math.max(q.offset ?? 0, 0);
   const rows = db
     .prepare(`SELECT * FROM audit_logs ${sql} ORDER BY id DESC LIMIT ? OFFSET ?`)
     .all(...args, limit, offset) as (AuditRow & { id: number })[];
   return { rows, total, limit, offset };
+}
+
+/** Delete audit rows older than `days` (0 = keep forever). Returns rows removed. */
+export function purgeOldAudit(db: DB, days: number): number {
+  if (!days || days <= 0) return 0;
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+  return db.prepare("DELETE FROM audit_logs WHERE ts < ?").run(cutoff).changes;
+}
+
+/** Serialize audit rows to CSV for download (admin export). */
+export function auditToCsv(rows: (AuditRow & { id: number })[]): string {
+  const cols = [
+    "ts", "category", "action", "method", "route", "status", "email", "user_id",
+    "ip", "geo_country", "geo_region", "geo_city", "geo_status", "detail", "user_agent",
+  ] as const;
+  const esc = (v: unknown): string => {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [cols.join(",")];
+  for (const r of rows) lines.push(cols.map((c) => esc((r as unknown as Record<string, unknown>)[c])).join(","));
+  return lines.join("\n");
 }
 
 export interface AuditSummary {

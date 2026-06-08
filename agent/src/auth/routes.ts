@@ -38,7 +38,7 @@ import {
   adminSetStatus,
 } from "./users";
 import { acceptInvite, inspectInvite } from "./invitations";
-import { queryAudit, summarizeAudit } from "../db/auditStore";
+import { auditToCsv, queryAudit, summarizeAudit } from "../db/auditStore";
 import { toPublicUser } from "./types";
 import { env } from "../env";
 
@@ -392,17 +392,32 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
     status: z.coerce.number().int().optional(),
     limit: z.coerce.number().int().optional(),
     offset: z.coerce.number().int().optional(),
+    format: z.enum(["csv", "json"]).optional(),
   });
 
   api.get("/admin/audit", adminOnly, async (req, reply) => {
     const parsed = AuditQuerySchema.safeParse(req.query);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
-    return reply.send({ ok: true, ...queryAudit(getDb(), parsed.data) });
+    return reply.send({ ok: true, retentionDays: env.HHC_AUDIT_RETENTION_DAYS, siem: env.HHC_SIEM_URL.length > 0, ...queryAudit(getDb(), parsed.data) });
   });
 
   api.get("/admin/audit/summary", adminOnly, async (req, reply) => {
     const parsed = AuditQuerySchema.safeParse(req.query);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
     return reply.send({ ok: true, summary: summarizeAudit(getDb(), parsed.data) });
+  });
+
+  // Download the (filtered) audit log as CSV or JSON.
+  api.get("/admin/audit/export", adminOnly, async (req, reply) => {
+    const parsed = AuditQuerySchema.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    const { rows } = queryAudit(getDb(), { ...parsed.data, limit: 10000, offset: 0 });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    if (parsed.data.format === "json") {
+      reply.header("content-disposition", `attachment; filename="hhc-audit-${stamp}.json"`).type("application/json");
+      return reply.send(JSON.stringify(rows, null, 2));
+    }
+    reply.header("content-disposition", `attachment; filename="hhc-audit-${stamp}.csv"`).type("text/csv; charset=utf-8");
+    return reply.send(auditToCsv(rows));
   });
 }

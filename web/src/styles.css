@@ -353,3 +353,5 @@ button .spinner { margin-right: 0.4rem; }
 .audit-table code { font-size: 0.8rem; }
 .audit-ua { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .audit-pager { display: flex; gap: 0.8rem; align-items: center; margin-top: 0.6rem; }
+.audit-export { display: flex; gap: 0.7rem; align-items: center; margin: 0.4rem 0; }
+.audit-export .spacer { flex: 1; }

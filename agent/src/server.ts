@@ -19,6 +19,7 @@ import { makeAuthOnRequest } from "./auth/hook";
 import { makeAuditOnResponse } from "./audit/hook";
 import { registerAuthRoutes, registerAdminRoutes } from "./auth/routes";
 import { bootstrapAdmin } from "./auth/users";
+import { purgeOldAudit } from "./db/auditStore";
 
 const IdentifiersSchema = z
   .object({
@@ -289,7 +290,20 @@ export function buildServer(opts: BuildServerOpts = {}): FastifyInstance {
 
 async function main() {
   assertAuthConfig(); // fail fast if HHC_AUTH=1 without HHC_DB_KEY / HHC_SESSION_SECRET
-  if (isAuthEnabled()) bootstrapAdmin(getDb()); // create the first admin if none exists
+  if (isAuthEnabled()) {
+    bootstrapAdmin(getDb()); // create the first admin if none exists
+    // Audit retention: purge old rows on start, then daily (0 days = keep forever).
+    const purge = () => {
+      try {
+        const n = purgeOldAudit(getDb(), env.HHC_AUDIT_RETENTION_DAYS);
+        if (n > 0) console.log(`[hhc-audit] purged ${n} audit row(s) older than ${env.HHC_AUDIT_RETENTION_DAYS}d`);
+      } catch {
+        /* best-effort */
+      }
+    };
+    purge();
+    setInterval(purge, 24 * 3600 * 1000).unref();
+  }
   const app = buildServer();
   const host = isServeWeb() ? "0.0.0.0" : "127.0.0.1";
   try {

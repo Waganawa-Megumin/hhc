@@ -275,7 +275,11 @@
       "catAll": "すべて",
       "catAuth": "認証",
       "catOperation": "操作",
-      "catAdmin": "管理"
+      "catAdmin": "管理",
+      "exportCsv": "CSVエクスポート",
+      "exportJson": "JSONエクスポート",
+      "retention": "保持期間: {{days}}日（自動削除）",
+      "siemOn": "SIEM転送: 有効"
     }
   },
   "invite": {

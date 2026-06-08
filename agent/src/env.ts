@@ -56,6 +56,12 @@ const EnvSchema = z.object({
   // Geolocation for audit (Phase 2). Keyless; degrades gracefully.
   HHC_GEO_ENABLED: z.string().default("1"),
   HHC_GEO_BASE_URL: z.string().default("http://ip-api.com/json"),
+  // Audit retention: delete audit rows older than N days (0 = keep forever). Default 30.
+  HHC_AUDIT_RETENTION_DAYS: z.coerce.number().int().nonnegative().default(30),
+  // Optional SIEM forwarding of each audit event (Splunk HEC or a generic JSON webhook).
+  HHC_SIEM_URL: z.string().default(""),
+  HHC_SIEM_TOKEN: z.string().default(""),
+  HHC_SIEM_FORMAT: z.string().default("splunk"), // "splunk" (HEC) | "json"
 });
 
 export const env = EnvSchema.parse(process.env);

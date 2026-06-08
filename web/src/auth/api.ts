@@ -68,7 +68,10 @@ export const authApi = {
   ) => req<{ initialPassword?: string; inviteLink?: string; emailStatus?: string }>("PATCH", `/api/admin/users/${id}`, body),
 
   adminAudit: (qs: string) =>
-    req<{ rows: AuditRow[]; total: number; limit: number; offset: number }>("GET", `/api/admin/audit${qs}`),
+    req<{ rows: AuditRow[]; total: number; limit: number; offset: number; retentionDays: number; siem: boolean }>(
+      "GET",
+      `/api/admin/audit${qs}`,
+    ),
   adminAuditSummary: (qs: string) => req<{ summary: AuditSummary }>("GET", `/api/admin/audit/summary${qs}`),
 };
 

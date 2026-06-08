@@ -4,8 +4,9 @@
 // records request bodies (could contain passwords/MFA codes) and never throws.
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { DB } from "../db/db";
-import { recordAudit } from "../db/auditStore";
+import { recordAudit, type AuditRow } from "../db/auditStore";
 import { geoLookup } from "./geo";
+import { forwardAudit } from "./siem";
 
 // Route+method → a stable, readable action verb. Unknown routes fall back to
 // "METHOD route". The pattern (with :id) comes from req.routeOptions.url.
@@ -119,7 +120,7 @@ export function makeAuditOnResponse(getDb: () => DB) {
       const ip = req.ip ?? null;
       const geo = await geoLookup(ip);
       const action = ACTION_MAP[key] ?? key;
-      recordAudit(getDb(), {
+      const row: AuditRow = {
         ts: new Date().toISOString(),
         user_id: req.auth?.userId ?? null,
         email: req.auth?.email ?? null,
@@ -135,7 +136,9 @@ export function makeAuditOnResponse(getDb: () => DB) {
         geo_city: geo.city ?? null,
         geo_status: geo.status,
         detail: safeDetail(key, req),
-      });
+      };
+      recordAudit(getDb(), row);
+      void forwardAudit(row).catch(() => {}); // fire-and-forget to the SIEM
     } catch {
       // Auditing must never break a response or the run.
     }

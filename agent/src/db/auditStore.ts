@@ -18,14 +18,16 @@ export interface AuditRow {
   geo_region: string | null;
   geo_city: string | null;
   geo_status: string | null;
+  /** Safe, non-sensitive operation summary (e.g. "company=… domain=…"); never bodies. */
+  detail: string | null;
 }
 
 export function recordAudit(db: DB, row: AuditRow): void {
   assertNoDemographicScoringFields(row, "audit log");
   db.prepare(
     `INSERT INTO audit_logs
-       (ts, user_id, email, action, route, method, status, ip, user_agent, geo_country, geo_region, geo_city, geo_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (ts, user_id, email, action, route, method, status, ip, user_agent, geo_country, geo_region, geo_city, geo_status, detail)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     row.ts,
     row.user_id,
@@ -40,6 +42,7 @@ export function recordAudit(db: DB, row: AuditRow): void {
     row.geo_region,
     row.geo_city,
     row.geo_status,
+    row.detail,
   );
 }
 

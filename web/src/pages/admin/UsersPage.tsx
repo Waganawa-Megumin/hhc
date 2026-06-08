@@ -4,6 +4,10 @@ import { useAuth } from "../../auth/AuthContext";
 import { authApi } from "../../auth/api";
 import type { PublicUser, Role } from "../../auth/types";
 
+type Notice =
+  | { kind: "invite"; email: string; link: string; emailStatus: string }
+  | { kind: "password"; email: string; pw: string };
+
 export default function UsersPage() {
   const { t } = useTranslation();
   const { user: me } = useAuth();
@@ -12,7 +16,7 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<Role>("user");
-  const [shown, setShown] = useState<{ email: string; pw: string } | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   async function load() {
     const r = await authApi.adminListUsers();
@@ -29,54 +33,68 @@ export default function UsersPage() {
     setError(null);
     const r = await authApi.adminCreateUser(newEmail.trim().toLowerCase(), newRole);
     if (!r.ok) return setError(r.data.error ?? "error");
+    setNotice({ kind: "invite", email: r.data.user.email, link: r.data.inviteLink, emailStatus: r.data.emailStatus });
     setNewEmail("");
-    if (r.data.initialPassword) setShown({ email: r.data.user.email, pw: r.data.initialPassword });
     await load();
   }
 
-  async function patch(
-    id: string,
-    body: Parameters<typeof authApi.adminPatchUser>[1],
-    email?: string,
-  ) {
+  async function patch(u: PublicUser, body: Parameters<typeof authApi.adminPatchUser>[1]) {
     setError(null);
-    const r = await authApi.adminPatchUser(id, body);
+    const r = await authApi.adminPatchUser(u.id, body);
     if (!r.ok) return setError(r.data.error ?? "error");
-    if (r.data.initialPassword && email) setShown({ email, pw: r.data.initialPassword });
+    if (body.action === "reset-password" && r.data.initialPassword) {
+      setNotice({ kind: "password", email: u.email, pw: r.data.initialPassword });
+    } else if (body.action === "resend-invite" && r.data.inviteLink) {
+      setNotice({ kind: "invite", email: u.email, link: r.data.inviteLink, emailStatus: r.data.emailStatus ?? "" });
+    }
     await load();
   }
+
+  const statusLabel = (s: PublicUser["status"]) =>
+    s === "active" ? t("admin.statusActive") : s === "invited" ? t("admin.statusInvited") : t("admin.statusDisabled");
 
   return (
     <section className="admin-users">
       <h2>{t("admin.usersTitle")}</h2>
 
       <form className="admin-create" onSubmit={create}>
-        <input
-          type="email"
-          placeholder={t("admin.email")}
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
-          required
-        />
+        <input type="email" placeholder={t("admin.email")} value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required />
         <select value={newRole} onChange={(e) => setNewRole(e.target.value as Role)}>
           <option value="user">{t("auth.roleUser")}</option>
           <option value="admin">{t("auth.roleAdmin")}</option>
         </select>
         <button type="submit" className="primary">
-          {t("admin.createUser")}
+          {t("admin.inviteUser")}
         </button>
       </form>
 
-      {shown ? (
+      {notice ? (
         <div className="admin-flash">
-          <strong>{t("admin.initialPasswordFor", { email: shown.email })}:</strong> <code>{shown.pw}</code>
-          <button type="button" className="ghost small-btn" onClick={() => void navigator.clipboard.writeText(shown.pw)}>
-            {t("report.copy")}
-          </button>
-          <button type="button" className="ghost small-btn" onClick={() => setShown(null)}>
+          {notice.kind === "invite" ? (
+            <>
+              <strong>{t("admin.inviteFor", { email: notice.email })}</strong>
+              <p className="muted small">
+                {notice.emailStatus === "sent" ? t("admin.inviteEmailSent") : t("admin.inviteEmailUnavailable")}
+              </p>
+              <div className="invite-link-row">
+                <code className="invite-link">{notice.link}</code>
+                <button type="button" className="ghost small-btn" onClick={() => void navigator.clipboard.writeText(notice.link)}>
+                  {t("admin.copyLink")}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <strong>{t("admin.initialPasswordFor", { email: notice.email })}:</strong> <code>{notice.pw}</code>
+              <button type="button" className="ghost small-btn" onClick={() => void navigator.clipboard.writeText(notice.pw)}>
+                {t("report.copy")}
+              </button>
+              <p className="muted small">{t("admin.initialPasswordHint")}</p>
+            </>
+          )}
+          <button type="button" className="ghost small-btn" onClick={() => setNotice(null)}>
             ✕
           </button>
-          <p className="muted small">{t("admin.initialPasswordHint")}</p>
         </div>
       ) : null}
 
@@ -101,41 +119,45 @@ export default function UsersPage() {
               <td>
                 <select
                   value={u.role}
-                  onChange={(e) => void patch(u.id, { action: "set-role", role: e.target.value as Role })}
+                  onChange={(e) => void patch(u, { action: "set-role", role: e.target.value as Role })}
                   disabled={u.id === me?.id}
                 >
                   <option value="user">{t("auth.roleUser")}</option>
                   <option value="admin">{t("auth.roleAdmin")}</option>
                 </select>
               </td>
-              <td>{u.status === "active" ? t("admin.statusActive") : t("admin.statusDisabled")}</td>
+              <td>{statusLabel(u.status)}</td>
               <td>{u.mfaEnrolled ? u.mfaMethod.toUpperCase() : t("admin.mfaNone")}</td>
               <td className="muted small">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : "—"}</td>
               <td className="admin-row-actions">
-                {u.status === "active" ? (
-                  <button
-                    type="button"
-                    className="ghost small-btn"
-                    disabled={u.id === me?.id}
-                    onClick={() => void patch(u.id, { action: "set-status", status: "disabled" })}
-                  >
-                    {t("admin.disable")}
+                {u.status === "invited" ? (
+                  <button type="button" className="ghost small-btn" onClick={() => void patch(u, { action: "resend-invite" })}>
+                    {t("admin.resendInvite")}
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="ghost small-btn"
-                    onClick={() => void patch(u.id, { action: "set-status", status: "active" })}
-                  >
+                ) : null}
+                {u.status === "active" ? (
+                  <>
+                    <button
+                      type="button"
+                      className="ghost small-btn"
+                      disabled={u.id === me?.id}
+                      onClick={() => void patch(u, { action: "set-status", status: "disabled" })}
+                    >
+                      {t("admin.disable")}
+                    </button>
+                    <button type="button" className="ghost small-btn" onClick={() => void patch(u, { action: "reset-password" })}>
+                      {t("admin.resetPassword")}
+                    </button>
+                    <button type="button" className="ghost small-btn" onClick={() => void patch(u, { action: "force-mfa" })}>
+                      {t("admin.forceMfa")}
+                    </button>
+                  </>
+                ) : null}
+                {u.status === "disabled" ? (
+                  <button type="button" className="ghost small-btn" onClick={() => void patch(u, { action: "set-status", status: "active" })}>
                     {t("admin.enable")}
                   </button>
-                )}
-                <button type="button" className="ghost small-btn" onClick={() => void patch(u.id, { action: "reset-password" }, u.email)}>
-                  {t("admin.resetPassword")}
-                </button>
-                <button type="button" className="ghost small-btn" onClick={() => void patch(u.id, { action: "force-mfa" })}>
-                  {t("admin.forceMfa")}
-                </button>
+                ) : null}
               </td>
             </tr>
           ))}

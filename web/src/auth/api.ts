@@ -49,18 +49,23 @@ export const authApi = {
   mfaConfirm: (method: "totp" | "email", code: string) =>
     req<{ user: PublicUser }>("POST", "/api/auth/mfa/confirm", { method, code }),
 
+  // invitation setup (public)
+  inviteInfo: (token: string) => req<{ email: string }>("GET", `/api/invite/${encodeURIComponent(token)}`),
+  inviteAccept: (token: string, password: string) =>
+    req<{ user: PublicUser; mustEnrollMfa: boolean }>("POST", "/api/invite/accept", { token, password }),
+
   // admin
   adminListUsers: () => req<{ users: PublicUser[] }>("GET", "/api/admin/users"),
-  adminCreateUser: (email: string, role: Role, initialPassword?: string) =>
-    req<{ user: PublicUser; initialPassword: string | null }>("POST", "/api/admin/users", {
-      email,
-      role,
-      initialPassword: initialPassword || undefined,
-    }),
+  adminCreateUser: (email: string, role: Role) =>
+    req<{ user: PublicUser; inviteLink: string; emailStatus: string }>("POST", "/api/admin/users", { email, role }),
   adminPatchUser: (
     id: string,
-    body: { action: "set-role" | "set-status" | "reset-password" | "force-mfa"; role?: Role; status?: "active" | "disabled" },
-  ) => req<{ initialPassword?: string }>("PATCH", `/api/admin/users/${id}`, body),
+    body: {
+      action: "set-role" | "set-status" | "reset-password" | "force-mfa" | "resend-invite";
+      role?: Role;
+      status?: "active" | "disabled";
+    },
+  ) => req<{ initialPassword?: string; inviteLink?: string; emailStatus?: string }>("PATCH", `/api/admin/users/${id}`, body),
 
   adminAudit: (qs: string) =>
     req<{ rows: AuditRow[]; total: number; limit: number; offset: number }>("GET", `/api/admin/audit${qs}`),
@@ -82,6 +87,7 @@ export interface AuditRow {
   geo_region: string | null;
   geo_city: string | null;
   geo_status: string | null;
+  detail: string | null;
 }
 export interface AuditSummary {
   total: number;

@@ -138,6 +138,7 @@ export default function AuditPage() {
             <th>{t("admin.audit.time")}</th>
             <th>{t("admin.audit.user")}</th>
             <th>{t("admin.audit.action")}</th>
+            <th>{t("admin.audit.detail")}</th>
             <th>{t("admin.audit.status")}</th>
             <th>{t("admin.audit.ip")}</th>
             <th>{t("admin.audit.location")}</th>
@@ -153,6 +154,7 @@ export default function AuditPage() {
                 <code>{r.action}</code>
                 <span className="muted small"> {r.method}</span>
               </td>
+              <td className="audit-detail muted small">{r.detail ?? "—"}</td>
               <td className={r.status >= 400 ? "warn" : ""}>{r.status}</td>
               <td className="nowrap">{r.ip ?? "—"}</td>
               <td>{geoText(r)}</td>

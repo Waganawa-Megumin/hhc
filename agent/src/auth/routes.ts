@@ -2,7 +2,7 @@
 // (password → MFA challenge → session); onboarding (change password, enroll MFA)
 // is forced for fresh accounts. Errors are intentionally generic to resist
 // account enumeration; secrets/codes are never returned over HTTP.
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { DB } from "../db/db";
 import * as store from "../db/authStore";
@@ -26,15 +26,18 @@ import {
   generateEmailCode,
   hashCode,
   sendEmailCode,
+  sendInviteEmail,
   verifyCodeHash,
 } from "./mfaEmail";
 import {
   adminCreateUser,
   adminForceMfa,
+  adminResendInvite,
   adminResetPassword,
   adminSetRole,
   adminSetStatus,
 } from "./users";
+import { acceptInvite, inspectInvite } from "./invitations";
 import { queryAudit, summarizeAudit } from "../db/auditStore";
 import { toPublicUser } from "./types";
 import { env } from "../env";
@@ -46,6 +49,14 @@ function setSessionCookie(reply: FastifyReply, raw: string, maxAgeSec: number): 
 }
 function clearSessionCookie(reply: FastifyReply): void {
   reply.clearCookie(SESSION_COOKIE, { path: "/" });
+}
+
+/** Absolute setup link for an invite email (and shown in the admin UI). Uses the
+ * request's protocol/host, so it works behind the Vite proxy (dev) and the Fastify
+ * edge (served, where trustProxy gives the forwarded scheme/host). */
+function inviteLink(req: FastifyRequest, rawToken: string): string {
+  const host = String(req.headers["host"] ?? "localhost");
+  return `${req.protocol}://${host}/invite/${rawToken}`;
 }
 
 export function registerAuthRoutes(api: FastifyInstance, getDb: () => DB): void {
@@ -191,6 +202,35 @@ export function registerAuthRoutes(api: FastifyInstance, getDb: () => DB): void 
     return reply.send({ ok: true });
   });
 
+  // ── invitation setup (public; the token IS the credential) ────────────────────
+  api.get<{ Params: { token: string } }>("/invite/:token", async (req, reply) => {
+    const info = inspectInvite(getDb(), req.params.token);
+    if (!info.ok) return reply.code(404).send({ error: "invite_invalid" });
+    return reply.send({ ok: true, email: info.email });
+  });
+
+  api.post("/invite/accept", async (req, reply) => {
+    const parsed = z.object({ token: z.string(), password: z.string() }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
+    const db = getDb();
+    const r = acceptInvite(db, parsed.data.token, parsed.data.password);
+    if (!r.ok) return reply.code(r.error === "weak_password" ? 400 : 401).send({ error: r.error });
+    const user = store.getUserById(db, r.userId)!;
+    // Issue a full session so the new user proceeds straight to MFA enrollment.
+    const { raw, hash } = newSessionToken();
+    store.createSession(db, {
+      userId: user.user_id,
+      tokenHash: hash,
+      expiresAt: absoluteExpiry(),
+      mfaSatisfied: true,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"] ?? null,
+    });
+    store.setLastLogin(db, user.user_id);
+    setSessionCookie(reply, raw, SESSION_TTL_SEC());
+    return reply.send({ ok: true, user: toPublicUser(user), mustEnrollMfa: user.must_enroll_mfa === 1 });
+  });
+
   // ── who am I (authenticated) ───────────────────────────────────────────────────
   api.get("/auth/me", async (req, reply) => {
     const db = getDb();
@@ -289,13 +329,13 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
   });
 
   api.post("/admin/users", adminOnly, async (req, reply) => {
-    const parsed = z
-      .object({ email: z.string(), role: z.enum(["admin", "user"]).default("user"), initialPassword: z.string().optional() })
-      .safeParse(req.body);
+    const parsed = z.object({ email: z.string(), role: z.enum(["admin", "user"]).default("user") }).safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
     try {
-      const { user, initialPassword } = adminCreateUser(getDb(), parsed.data.email, parsed.data.role, parsed.data.initialPassword);
-      return reply.send({ ok: true, user: toPublicUser(user), initialPassword });
+      const { user, rawToken } = adminCreateUser(getDb(), parsed.data.email, parsed.data.role);
+      const link = inviteLink(req, rawToken);
+      const emailStatus = await sendInviteEmail(user.email, link);
+      return reply.send({ ok: true, user: toPublicUser(user), inviteLink: link, emailStatus });
     } catch (e) {
       return reply.code(400).send({ error: (e as Error).message });
     }
@@ -304,7 +344,7 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
   api.patch<{ Params: { id: string } }>("/admin/users/:id", adminOnly, async (req, reply) => {
     const parsed = z
       .object({
-        action: z.enum(["set-role", "set-status", "reset-password", "force-mfa"]),
+        action: z.enum(["set-role", "set-status", "reset-password", "force-mfa", "resend-invite"]),
         role: z.enum(["admin", "user"]).optional(),
         status: z.enum(["active", "disabled"]).optional(),
       })
@@ -327,6 +367,12 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
         case "force-mfa":
           adminForceMfa(db, id);
           return reply.send({ ok: true });
+        case "resend-invite": {
+          const { rawToken, email } = adminResendInvite(db, id);
+          const link = inviteLink(req, rawToken);
+          const emailStatus = await sendInviteEmail(email, link);
+          return reply.send({ ok: true, inviteLink: link, emailStatus });
+        }
       }
     } catch (e) {
       const msg = (e as Error).message;

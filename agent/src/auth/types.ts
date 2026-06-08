@@ -1,7 +1,9 @@
 // Auth domain types + Fastify request augmentation. Roles are exactly Admin/User.
 export type Role = "admin" | "user";
 export type MfaMethod = "none" | "totp" | "email";
-export type UserStatus = "active" | "disabled";
+// "invited" = created by an admin, awaiting first setup via the emailed invite link
+// (no usable password yet); becomes "active" once the invite is accepted.
+export type UserStatus = "active" | "disabled" | "invited";
 
 export interface UserRow {
   user_id: string;

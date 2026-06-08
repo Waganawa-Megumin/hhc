@@ -69,3 +69,20 @@ export async function sendEmailCode(to: string, code: string): Promise<EmailSend
     return "send_failed";
   }
 }
+
+/** Send an account-setup invitation link (no password). Graceful no-op if SMTP unset
+ * — the caller still surfaces the link so the admin can share it manually. */
+export async function sendInviteEmail(to: string, link: string): Promise<EmailSendStatus> {
+  if (!smtpConfigured()) return "smtp_unavailable";
+  try {
+    await getTransport().sendMail({
+      from: env.SMTP_FROM || env.SMTP_USER || "hhc@localhost",
+      to,
+      subject: "HHC アカウント設定の招待 / account setup invitation",
+      text: `HHC のアカウントが作成されました。以下のリンクからパスワードと多要素認証(MFA)を設定してください（72時間有効）:\n${link}\n\nAn HHC account was created for you. Set your password and MFA via this link (valid 72 hours):\n${link}`,
+    });
+    return "sent";
+  } catch {
+    return "send_failed";
+  }
+}

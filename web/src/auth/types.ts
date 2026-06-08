@@ -5,7 +5,7 @@ export interface PublicUser {
   id: string;
   email: string;
   role: Role;
-  status: "active" | "disabled";
+  status: "active" | "disabled" | "invited";
   mfaMethod: MfaMethod;
   mfaEnrolled: boolean;
   mustChangePassword: boolean;

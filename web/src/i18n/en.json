@@ -239,6 +239,13 @@
     "lastLogin": "Last login",
     "actions": "Actions",
     "createUser": "Create user",
+    "inviteUser": "Invite user",
+    "statusInvited": "invited",
+    "resendInvite": "Resend invite",
+    "inviteFor": "Invitation created for {{email}}",
+    "inviteEmailSent": "Invitation email sent.",
+    "inviteEmailUnavailable": "Email unavailable (SMTP not configured). Share the link below with the user.",
+    "copyLink": "Copy link",
     "disable": "Disable",
     "enable": "Enable",
     "resetPassword": "Reset password",
@@ -257,6 +264,7 @@
       "clear": "Clear",
       "time": "Time",
       "user": "User",
+      "detail": "Detail",
       "status": "Status",
       "ip": "Source IP",
       "location": "Location",
@@ -265,5 +273,11 @@
       "prev": "Prev",
       "next": "Next"
     }
+  },
+  "invite": {
+    "title": "Account setup",
+    "welcome": "Welcome, {{email}}. First, set your password (you'll set up MFA next).",
+    "setPassword": "Set password & continue",
+    "invalid": "This invite link is invalid or has expired. Ask an admin to resend it."
   }
 }

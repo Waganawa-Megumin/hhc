@@ -12,6 +12,20 @@ export type DB = Database.Database;
 
 const here = dirname(fileURLToPath(import.meta.url)); // agent/src/db
 
+/** Idempotent migrations for DBs created before a column existed (CREATE TABLE IF
+ * NOT EXISTS does not add columns to an existing table). Each ALTER is best-effort:
+ * SQLite throws "duplicate column" if it already exists, which we ignore. */
+function migrate(db: DB): void {
+  const addColumn = (sql: string) => {
+    try {
+      db.exec(sql);
+    } catch {
+      /* column already present */
+    }
+  };
+  addColumn("ALTER TABLE audit_logs ADD COLUMN detail TEXT");
+}
+
 export function dbFilePath(): string {
   // data/ at the repo root (gitignored).
   return resolve(here, "../../../data/hhc-cases.db");
@@ -35,6 +49,7 @@ export function getDb(): DB {
   db.pragma("foreign_keys = ON");
   const schema = readFileSync(resolve(here, "schema.sql"), "utf8");
   db.exec(schema);
+  migrate(db);
   instance = db;
   return db;
 }
@@ -55,5 +70,6 @@ export function openTestDb(): DB {
   const db = new Database(":memory:");
   const schema = readFileSync(resolve(here, "schema.sql"), "utf8");
   db.exec(schema);
+  migrate(db);
   return db;
 }

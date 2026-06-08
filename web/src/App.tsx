@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import MfaChallengePage from "./pages/MfaChallengePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import MfaEnrollPage from "./pages/MfaEnrollPage";
+import InvitePage from "./pages/InvitePage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import UsersPage from "./pages/admin/UsersPage";
 import AuditPage from "./pages/admin/AuditPage";
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/mfa" element={<MfaChallengePage />} />
       <Route path="/onboarding/password" element={<ChangePasswordPage />} />
       <Route path="/onboarding/mfa" element={<MfaEnrollPage />} />
+      <Route path="/invite/:token" element={<InvitePage />} />
       <Route
         path="/"
         element={

@@ -112,7 +112,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   geo_country TEXT,
   geo_region  TEXT,
   geo_city    TEXT,
-  geo_status  TEXT             -- 'ok' | 'unavailable' | 'error'
+  geo_status  TEXT,            -- 'ok' | 'unavailable' | 'error'
+  detail      TEXT             -- safe, non-sensitive operation summary (no bodies/secrets)
+);
+
+-- Invitations: an admin "adds" a user → an emailed setup link (no initial password).
+-- The raw token lives only in the link/email; the DB stores sha256(token).
+CREATE TABLE IF NOT EXISTS invitations (
+  token_hash  TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  email       TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  expires_at  TEXT NOT NULL,
+  used_at     TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

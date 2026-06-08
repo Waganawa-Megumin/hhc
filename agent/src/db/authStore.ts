@@ -29,6 +29,7 @@ export interface InsertUserArgs {
   email: string;
   passwordHash: string;
   role: Role;
+  status?: UserStatus;
   mustChangePassword?: boolean;
   mustEnrollMfa?: boolean;
 }
@@ -39,10 +40,46 @@ export function insertUser(db: DB, a: InsertUserArgs): UserRow {
     `INSERT INTO users
        (user_id, email, password_hash, role, status, mfa_method, mfa_enrolled,
         must_change_password, must_enroll_mfa, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'active', 'none', 0, ?, ?, ?, ?)`,
-  ).run(id, a.email.toLowerCase(), a.passwordHash, a.role, a.mustChangePassword ? 1 : 0, a.mustEnrollMfa ? 1 : 0, ts, ts);
+     VALUES (?, ?, ?, ?, ?, 'none', 0, ?, ?, ?, ?)`,
+  ).run(
+    id,
+    a.email.toLowerCase(),
+    a.passwordHash,
+    a.role,
+    a.status ?? "active",
+    a.mustChangePassword ? 1 : 0,
+    a.mustEnrollMfa ? 1 : 0,
+    ts,
+    ts,
+  );
   db.prepare("INSERT INTO mfa (user_id) VALUES (?)").run(id);
   return getUserById(db, id)!;
+}
+
+// ── invitations ───────────────────────────────────────────────────────────────
+export interface InvitationRow {
+  token_hash: string;
+  user_id: string;
+  email: string;
+  created_at: string;
+  expires_at: string;
+  used_at: string | null;
+}
+export function createInvitation(
+  db: DB,
+  a: { userId: string; email: string; tokenHash: string; expiresAt: string },
+): void {
+  // One active invite per user — drop any prior unused one (e.g. on resend).
+  db.prepare("DELETE FROM invitations WHERE user_id = ? AND used_at IS NULL").run(a.userId);
+  db.prepare(
+    "INSERT INTO invitations (token_hash, user_id, email, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+  ).run(a.tokenHash, a.userId, a.email.toLowerCase(), nowIso(), a.expiresAt);
+}
+export function findInvitationByTokenHash(db: DB, tokenHash: string): InvitationRow | undefined {
+  return db.prepare("SELECT * FROM invitations WHERE token_hash = ?").get(tokenHash) as InvitationRow | undefined;
+}
+export function markInvitationUsed(db: DB, tokenHash: string): void {
+  db.prepare("UPDATE invitations SET used_at = ? WHERE token_hash = ?").run(nowIso(), tokenHash);
 }
 
 export function setPasswordHash(db: DB, userId: string, hash: string, mustChange = false): void {

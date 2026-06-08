@@ -34,7 +34,8 @@ function pathOf(url: string): string {
 export function makeAuthOnRequest(getDb: () => DB) {
   return async function authOnRequest(req: FastifyRequest, reply: FastifyReply): Promise<void> {
     const path = pathOf(req.url);
-    if (PUBLIC_PATHS.has(path)) return;
+    // Invite setup is public — the single-use token in the path IS the credential.
+    if (PUBLIC_PATHS.has(path) || path.startsWith("/api/invite/")) return;
 
     const token = req.cookies?.[SESSION_COOKIE];
     if (!token) return void reply.code(401).send({ error: "auth_required" });

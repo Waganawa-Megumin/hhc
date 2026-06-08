@@ -18,6 +18,7 @@ const ACTION_MAP: Record<string, string> = {
   "POST /api/auth/mfa/enroll": "mfa.enroll",
   "POST /api/auth/mfa/send": "mfa.send",
   "POST /api/auth/mfa/confirm": "mfa.confirm",
+  "POST /api/invite/accept": "invite.accept",
   "POST /api/interpret": "interpret",
   "POST /api/osint": "osint",
   "POST /api/subject/recall": "subject.recall",
@@ -35,6 +36,61 @@ const ACTION_MAP: Record<string, string> = {
 
 // High-frequency / low-value paths we skip to keep the log signal-rich.
 const SKIP = new Set(["GET /api/health", "GET /api/auth/me", "GET /api/osint/:jobId"]);
+
+function trunc(s: string, n = 80): string {
+  return s.length > n ? `${s.slice(0, n)}…` : s;
+}
+
+/** A SAFE, non-sensitive operation summary from the request — never pasted text,
+ * passwords, MFA codes, person names, or full bodies. */
+function safeDetail(key: string, req: FastifyRequest): string | null {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  try {
+    switch (key) {
+      case "POST /api/auth/login":
+      case "POST /api/auth/change-password":
+        return typeof body.email === "string" ? `email=${trunc(body.email)}` : null;
+      case "POST /api/osint": {
+        const parts: string[] = [];
+        if (body.company) parts.push(`company="${trunc(String(body.company), 60)}"`);
+        if (body.domain) parts.push(`domain=${trunc(String(body.domain), 60)}`);
+        return parts.join(" ") || null; // person/title omitted (PII)
+      }
+      case "POST /api/report": {
+        const a = (body.assessment ?? {}) as Record<string, unknown>;
+        const bits: string[] = [];
+        if (a.band) bits.push(`band=${String(a.band)}`);
+        if (typeof a.score === "number") bits.push(`score=${a.score}`);
+        return bits.join(" ") || null;
+      }
+      case "POST /api/inquiry": {
+        const bits: string[] = [];
+        if (body.band) bits.push(`band=${String(body.band)}`);
+        if (typeof body.score === "number") bits.push(`score=${body.score}`);
+        return bits.join(" ") || null;
+      }
+      case "POST /api/interpret": {
+        const n = Array.isArray(body.images) ? body.images.length : 0;
+        const hasText = typeof body.text === "string" && body.text.length > 0;
+        return `text=${hasText ? "yes" : "no"} images=${n}`; // never the content
+      }
+      case "POST /api/admin/users":
+        return (
+          [body.email ? `target=${trunc(String(body.email))}` : null, body.role ? `role=${String(body.role)}` : null]
+            .filter(Boolean)
+            .join(" ") || null
+        );
+      case "PATCH /api/admin/users/:id":
+        return body.action
+          ? `action=${String(body.action)}${body.role ? ` role=${String(body.role)}` : ""}${body.status ? ` status=${String(body.status)}` : ""}`
+          : null;
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}
 
 export function makeAuditOnResponse(getDb: () => DB) {
   return async function auditOnResponse(req: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -60,6 +116,7 @@ export function makeAuditOnResponse(getDb: () => DB) {
         geo_region: geo.region ?? null,
         geo_city: geo.city ?? null,
         geo_status: geo.status,
+        detail: safeDetail(key, req),
       });
     } catch {
       // Auditing must never break a response or the run.

@@ -239,6 +239,13 @@
     "lastLogin": "最終ログイン",
     "actions": "操作",
     "createUser": "ユーザーを作成",
+    "inviteUser": "招待して追加",
+    "statusInvited": "招待中",
+    "resendInvite": "招待を再送",
+    "inviteFor": "{{email}} への招待を作成しました",
+    "inviteEmailSent": "招待メールを送信しました。",
+    "inviteEmailUnavailable": "メール送信は利用不可（SMTP未設定）。下のリンクを本人に共有してください。",
+    "copyLink": "リンクをコピー",
     "disable": "無効化",
     "enable": "有効化",
     "resetPassword": "パスワード再発行",
@@ -257,6 +264,7 @@
       "clear": "クリア",
       "time": "日時",
       "user": "ユーザー",
+      "detail": "詳細",
       "status": "ステータス",
       "ip": "アクセス元IP",
       "location": "ロケーション",
@@ -265,5 +273,11 @@
       "prev": "前へ",
       "next": "次へ"
     }
+  },
+  "invite": {
+    "title": "アカウント設定",
+    "welcome": "{{email}} さん、ようこそ。まずパスワードを設定してください（このあとMFAを設定します）。",
+    "setPassword": "パスワードを設定して続行",
+    "invalid": "この招待リンクは無効か、有効期限が切れています。管理者に再送を依頼してください。"
   }
 }

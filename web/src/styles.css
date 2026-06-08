@@ -329,6 +329,9 @@ button .spinner { margin-right: 0.4rem; }
 .admin-row-actions { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .admin-flash { background: rgba(116,217,159,0.1); border: 1px solid rgba(116,217,159,0.4); border-radius: 8px; padding: 0.5rem 0.7rem; margin: 0.5rem 0; }
 .admin-flash code { background: var(--panel-2); padding: 0.1rem 0.4rem; border-radius: 4px; }
+.invite-link-row { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.3rem; flex-wrap: wrap; }
+.invite-link { background: var(--panel-2); padding: 0.2rem 0.45rem; border-radius: 4px; word-break: break-all; font-size: 0.8rem; max-width: 100%; }
+.audit-detail { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Audit dashboard ──────────────────────────────────────────────────────── */
 .audit-summary { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0 0.8rem; }

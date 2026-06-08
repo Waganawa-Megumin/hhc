@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import type { DB } from "../db/db";
 import * as store from "../db/authStore";
 import { hashPassword } from "./passwords";
+import { createInvite } from "./invitations";
 import { env } from "../env";
 import type { Role, UserRow } from "./types";
 
@@ -36,23 +37,35 @@ export function generateInitialPassword(): string {
 
 export interface CreateUserResult {
   user: UserRow;
-  /** The generated password, returned ONCE, only when HHC generated it. */
-  initialPassword: string | null;
+  /** Single-use setup token (goes into the emailed invite link; never a password). */
+  rawToken: string;
 }
-export function adminCreateUser(db: DB, email: string, role: Role, initialPassword?: string): CreateUserResult {
+/** Add a user/admin as "invited": no usable password — they set one + enroll MFA via
+ * the emailed invite link. */
+export function adminCreateUser(db: DB, email: string, role: Role): CreateUserResult {
   const e = email.trim().toLowerCase();
   if (!EMAIL_RE.test(e)) throw new Error("invalid_email");
   if (store.getUserByEmail(db, e)) throw new Error("email_taken");
-  const generated = !initialPassword || initialPassword.length < 10;
-  const pw = generated ? generateInitialPassword() : initialPassword!;
+  const unusable = hashPassword(randomBytes(24).toString("base64url")); // no one knows this
   const user = store.insertUser(db, {
     email: e,
-    passwordHash: hashPassword(pw),
+    passwordHash: unusable,
     role,
-    mustChangePassword: true,
+    status: "invited",
+    mustChangePassword: false,
     mustEnrollMfa: true,
   });
-  return { user, initialPassword: generated ? pw : null };
+  const { rawToken } = createInvite(db, user.user_id, e);
+  return { user, rawToken };
+}
+
+/** Re-issue a fresh invite for a still-invited user (the previous link is dropped). */
+export function adminResendInvite(db: DB, userId: string): { rawToken: string; email: string } {
+  const u = store.getUserById(db, userId);
+  if (!u) throw new Error("not_found");
+  if (u.status !== "invited") throw new Error("not_invited");
+  const { rawToken } = createInvite(db, u.user_id, u.email);
+  return { rawToken, email: u.email };
 }
 
 export function adminResetPassword(db: DB, userId: string): string {

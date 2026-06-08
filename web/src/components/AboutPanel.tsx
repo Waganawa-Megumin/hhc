@@ -51,10 +51,12 @@ const L = {
     ja: [
       "① あなたが標的: 求人・ヘッドハンティングを装った勧誘（コンサル/シンクタンク偽装 → 機密アクセスの見極め → 報酬と引き換えに情報要求）。",
       "② あなたが採用・発注側: 応募者・フリーランス受託者の“なりすまし”（偽の身元で採用/受託し、システム・データ・コードへのアクセスを得る。例: 北朝鮮IT労働者詐欺）。",
+      "③ 対面・来客など: 取材・営業・視察・会議などで接触してくる相手の見極め（所属・要求内容・連絡経緯の不自然さを兆候としてチェック）。",
     ],
     en: [
       "(1) You are the target: a recruiter/headhunter front (fake consultancy/think tank → gauges your access → asks for info in exchange for pay).",
       "(2) You are hiring/contracting: a fraudulent applicant/freelancer (fake identity to get hired/contracted and gain access to systems, data, code — e.g. the DPRK IT-worker fraud).",
+      "(3) In-person / visitors: vetting someone who approaches via a meeting, sales call, interview, or site visit (check affiliation, what they ask for, and how contact began).",
     ],
   },
   osintHead: { ja: "OSINT照会で行うこと（流れ）", en: "What the OSINT lookup does (flow)" },

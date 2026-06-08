@@ -291,3 +291,41 @@ button .spinner { margin-right: 0.4rem; }
 .report-entry summary { cursor: pointer; font-size: 0.85rem; }
 .report-entry summary .band-badge { margin-right: 0.3rem; }
 .report-entry-actions { display: flex; gap: 0.4rem; margin: 0.4rem 0; flex-wrap: wrap; }
+
+/* ── Auth screens (login / MFA / onboarding) ─────────────────────────────── */
+.auth-loading { display: flex; justify-content: center; align-items: center; min-height: 60vh; }
+.auth-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.auth-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.3rem 1.4rem; }
+.auth-brand { display: flex; align-items: center; gap: 0.5rem; }
+.auth-brand h1 { font-size: 1.05rem; margin: 0; }
+.auth-brand .auth-lang { margin-left: auto; }
+.auth-title { font-size: 1.1rem; margin: 0.9rem 0 0.6rem; }
+.auth-form { display: flex; flex-direction: column; gap: 0.7rem; }
+.auth-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.auth-field input { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.5rem 0.6rem; font-size: 1rem; }
+.auth-submit { width: 100%; padding: 0.55rem; }
+.auth-resend { display: flex; align-items: center; gap: 0.5rem; }
+.mfa-qr { display: block; width: 200px; height: 200px; background: #fff; padding: 6px; border-radius: 8px; margin: 0.3rem 0; align-self: center; }
+.mfa-secret code { background: var(--panel-2); padding: 0.1rem 0.35rem; border-radius: 4px; word-break: break-all; }
+
+/* ── Header user menu ─────────────────────────────────────────────────────── */
+.user-menu { display: flex; align-items: center; gap: 0.5rem; }
+.user-email { font-size: 0.82rem; color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role-badge { font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.4rem; border-radius: 999px; }
+.role-badge.role-admin { background: rgba(110,168,254,0.2); color: var(--accent); }
+.role-badge.role-user { background: var(--chip); color: var(--muted); }
+
+/* ── Admin dashboard ──────────────────────────────────────────────────────── */
+.admin { max-width: 1100px; margin: 0 auto; padding: 0 1rem 2rem; }
+.admin-nav { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.admin-tab { padding: 0.3rem 0.7rem; border-radius: 6px 6px 0 0; color: var(--muted); text-decoration: none; border: 1px solid transparent; }
+.admin-tab.active { color: var(--text); border-color: var(--border); border-bottom-color: var(--panel); background: var(--panel); }
+.admin-main { margin-top: 1rem; }
+.admin-create { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+.admin-create input, .admin-create select { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.4rem 0.6rem; }
+.admin-table { font-size: 0.86rem; }
+.admin-table select { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.2rem 0.3rem; }
+.admin-table .row-disabled { opacity: 0.5; }
+.admin-row-actions { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.admin-flash { background: rgba(116,217,159,0.1); border: 1px solid rgba(116,217,159,0.4); border-radius: 8px; padding: 0.5rem 0.7rem; margin: 0.5rem 0; }
+.admin-flash code { background: var(--panel-2); padding: 0.1rem 0.4rem; border-radius: 4px; }

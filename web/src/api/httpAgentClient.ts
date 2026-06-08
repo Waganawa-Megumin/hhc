@@ -19,16 +19,28 @@ export interface AgentHealth {
   offline: boolean;
   anthropicKey: boolean;
   caseDb: boolean;
+  /** True when the backend enforces login (HHC_AUTH=1). */
+  auth?: boolean;
 }
 
 export async function getAgentHealth(): Promise<AgentHealth | null> {
   try {
-    const res = await fetch("/api/health");
+    const res = await fetch("/api/health", { credentials: "include" });
     if (!res.ok) return null;
     return (await res.json()) as AgentHealth;
   } catch {
     return null;
   }
+}
+
+/** Set by AuthProvider; invoked when any API call returns 401 so the UI can
+ * bounce the user to the login screen (session expired / revoked). */
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
+}
+function noteStatus(status: number): void {
+  if (status === 401 && onUnauthorized) onUnauthorized();
 }
 
 export interface CaseIdentifiers {
@@ -61,8 +73,10 @@ export async function recallSubject(identifiers: CaseIdentifiers): Promise<Recal
     const res = await fetch("/api/subject/recall", {
       method: "POST",
       headers: { "content-type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(identifiers),
     });
+    noteStatus(res.status);
     if (!res.ok) return null;
     return (await res.json()) as RecallResponse;
   } catch {
@@ -99,8 +113,10 @@ export async function recordInquiry(body: RecordInquiryBody): Promise<RecordInqu
   const res = await fetch("/api/inquiry", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
+  noteStatus(res.status);
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `http_${res.status}`);
   return data as unknown as RecordInquiryResponse;
@@ -108,7 +124,8 @@ export async function recordInquiry(body: RecordInquiryBody): Promise<RecordInqu
 
 export async function fetchStats(): Promise<{ enabled: boolean; stats?: unknown } | null> {
   try {
-    const res = await fetch("/api/stats");
+    const res = await fetch("/api/stats", { credentials: "include" });
+    noteStatus(res.status);
     if (!res.ok) return null;
     return (await res.json()) as { enabled: boolean; stats?: unknown };
   } catch {
@@ -117,7 +134,8 @@ export async function fetchStats(): Promise<{ enabled: boolean; stats?: unknown 
 }
 
 export async function exportCase(): Promise<{ filename: string; data: string }> {
-  const res = await fetch("/api/export");
+  const res = await fetch("/api/export", { credentials: "include" });
+  noteStatus(res.status);
   const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
   return { filename: String(d.filename), data: String(d.data) };
@@ -142,8 +160,10 @@ export async function generateReport(body: ReportRequestBody): Promise<string> {
   const res = await fetch("/api/report", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
+  noteStatus(res.status);
   const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
   return String(d.report ?? "");
@@ -153,8 +173,10 @@ export async function importCase(data: string): Promise<ImportResult> {
   const res = await fetch("/api/import", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ data }),
   });
+  noteStatus(res.status);
   const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(typeof d.error === "string" ? d.error : `http_${res.status}`);
   return d as unknown as ImportResult;
@@ -166,11 +188,13 @@ async function postJson(path: string, body: unknown): Promise<unknown> {
     res = await fetch(path, {
       method: "POST",
       headers: { "content-type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(body),
     });
   } catch {
     throw new AgentBackendUnavailableError();
   }
+  noteStatus(res.status);
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     const err = typeof data.error === "string" ? data.error : `http_${res.status}`;
@@ -198,10 +222,11 @@ export const httpAgentClient: AgentClient = {
       await new Promise((r) => setTimeout(r, 2500));
       let res: Response;
       try {
-        res = await fetch(`/api/osint/${start.jobId}`);
+        res = await fetch(`/api/osint/${start.jobId}`, { credentials: "include" });
       } catch {
         continue; // transient network blip — keep polling
       }
+      noteStatus(res.status);
       if (res.status === 404) throw new Error("osint_job_lost");
       if (!res.ok) continue;
       const d = (await res.json().catch(() => ({}))) as {

@@ -1,0 +1,64 @@
+// Thin fetch wrappers for the auth + admin endpoints. All use credentials:"include"
+// so the httpOnly session cookie rides along (same-origin in dev via the Vite proxy
+// and in served mode where Fastify is the edge).
+import type { MfaMethod, PublicUser, Role } from "./types";
+
+export interface ApiResult<T = Record<string, unknown>> {
+  status: number;
+  ok: boolean;
+  data: T & { error?: string };
+}
+
+const JSON_HEADERS = { "content-type": "application/json" };
+
+async function req<T = Record<string, unknown>>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<ApiResult<T>> {
+  const res = await fetch(path, {
+    method,
+    headers: body !== undefined ? JSON_HEADERS : undefined,
+    credentials: "include",
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  return { status: res.status, ok: res.ok, data };
+}
+
+export const authApi = {
+  me: () => req<{ user: PublicUser }>("GET", "/api/auth/me"),
+  login: (email: string, password: string) =>
+    req<{ mfaRequired: boolean; method?: MfaMethod; emailSend?: string; user?: PublicUser; mustChangePassword?: boolean; mustEnrollMfa?: boolean }>(
+      "POST",
+      "/api/auth/login",
+      { email, password },
+    ),
+  mfa: (code: string) => req<{ user: PublicUser }>("POST", "/api/auth/mfa", { code }),
+  mfaResend: () => req<{ status: string; retryInSec?: number }>("POST", "/api/auth/mfa/resend"),
+  logout: () => req("POST", "/api/auth/logout"),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    req<{ mustEnrollMfa: boolean }>("POST", "/api/auth/change-password", { currentPassword, newPassword }),
+  mfaEnroll: (method: "totp" | "email") =>
+    req<{ method: MfaMethod; qrDataUrl?: string; otpauthUri?: string; secret?: string; status?: string }>(
+      "POST",
+      "/api/auth/mfa/enroll",
+      { method },
+    ),
+  mfaSend: () => req<{ status: string; retryInSec?: number }>("POST", "/api/auth/mfa/send"),
+  mfaConfirm: (method: "totp" | "email", code: string) =>
+    req<{ user: PublicUser }>("POST", "/api/auth/mfa/confirm", { method, code }),
+
+  // admin
+  adminListUsers: () => req<{ users: PublicUser[] }>("GET", "/api/admin/users"),
+  adminCreateUser: (email: string, role: Role, initialPassword?: string) =>
+    req<{ user: PublicUser; initialPassword: string | null }>("POST", "/api/admin/users", {
+      email,
+      role,
+      initialPassword: initialPassword || undefined,
+    }),
+  adminPatchUser: (
+    id: string,
+    body: { action: "set-role" | "set-status" | "reset-password" | "force-mfa"; role?: Role; status?: "active" | "disabled" },
+  ) => req<{ initialPassword?: string }>("PATCH", `/api/admin/users/${id}`, body),
+};

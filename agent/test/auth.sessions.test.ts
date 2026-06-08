@@ -1,0 +1,37 @@
+import { describe, it, expect } from "vitest";
+import { openTestDb } from "../src/db/db";
+import * as store from "../src/db/authStore";
+import { hashPassword } from "../src/auth/passwords";
+import { newSessionToken, sha256hex, absoluteExpiry } from "../src/auth/sessions";
+
+describe("auth/sessions store", () => {
+  it("persists only the token hash, looks up by it, and revokes", () => {
+    const db = openTestDb();
+    const u = store.insertUser(db, { email: "a@b.co", passwordHash: hashPassword("xxxxxxxxxx"), role: "user" });
+    const { raw, hash } = newSessionToken();
+    const sid = store.createSession(db, {
+      userId: u.user_id,
+      tokenHash: hash,
+      expiresAt: absoluteExpiry(),
+      mfaSatisfied: true,
+    });
+
+    const row = db.prepare("SELECT token_hash FROM sessions WHERE session_id = ?").get(sid) as { token_hash: string };
+    expect(row.token_hash).toBe(hash);
+    expect(row.token_hash).not.toBe(raw); // the raw cookie token is never stored
+
+    expect(store.findSessionByTokenHash(db, sha256hex(raw))?.user_id).toBe(u.user_id);
+    store.deleteSession(db, sid);
+    expect(store.findSessionByTokenHash(db, sha256hex(raw))).toBeUndefined();
+    db.close();
+  });
+
+  it("counts recent login failures by email OR ip (lockout input)", () => {
+    const db = openTestDb();
+    const since = new Date(Date.now() - 60_000).toISOString();
+    for (let i = 0; i < 3; i++) store.recordLoginAttempt(db, { email: "x@y.co", ip: "1.2.3.4", success: false });
+    expect(store.countRecentFailures(db, "x@y.co", "9.9.9.9", since)).toBe(3); // matched by email
+    expect(store.countRecentFailures(db, "other@y.co", "1.2.3.4", since)).toBe(3); // matched by ip
+    db.close();
+  });
+});

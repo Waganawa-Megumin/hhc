@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "npm run build --workspace web",
+    "serve": "npm run build && HHC_SERVE_WEB=1 HHC_AUTH=1 npm run start --workspace agent",
     "dev": "concurrently -k -n agent,web -c blue,green \"npm:dev:agent\" \"npm:dev:web\"",
     "dev:web": "npm run dev --workspace web",
     "dev:agent": "npm run dev --workspace agent",

@@ -1,16 +1,23 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
+import fastifyCookie from "@fastify/cookie";
+import fastifyStatic from "@fastify/static";
 import { randomUUID } from "node:crypto";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { SubjectHintSchema, computeStats, type OsintResult } from "@hhc/shared";
-import { env, hasAnthropicKey, isOffline } from "./env";
+import { env, hasAnthropicKey, isOffline, isAuthEnabled, isServeWeb, assertAuthConfig } from "./env";
 import { interpret, type InterpretRequest } from "./anthropic/interpret";
 import { runOsint, type OsintProgress } from "./anthropic/osintAgent";
 import { makeModelComplete, makeLoopCreateMessage, makeWebSearch } from "./anthropic/client";
 import { buildTools, toolContextFromEnv } from "./tools/registry";
-import { getDb, isDbEnabled } from "./db/db";
+import { getDb, isDbEnabled, type DB } from "./db/db";
 import { recall, recordInquiry, getStatsRows } from "./db/store";
 import { exportCaseArmored, importCaseArmored } from "./db/exportImport";
 import { generateReport, type ReportRequest } from "./anthropic/report";
+import { makeAuthOnRequest } from "./auth/hook";
+import { registerAuthRoutes, registerAdminRoutes } from "./auth/routes";
+import { bootstrapAdmin } from "./auth/users";
 
 const IdentifiersSchema = z
   .object({
@@ -58,20 +65,23 @@ function sweepOsintJobs(): void {
   for (const [id, job] of osintJobs) if (job.startedAt < cutoff) osintJobs.delete(id);
 }
 
-export function buildServer() {
-  // Screenshots / PDFs are base64 (≈ +33%) → allow a generous body limit.
-  const app = Fastify({ logger: false, bodyLimit: 60 * 1024 * 1024 });
+function webDistDir(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "../../web/dist");
+}
 
-  app.get("/health", async () => ({
+/** Register the §6/§7 + case-DB feature routes (under the /api scope). */
+function registerFeatureRoutes(api: FastifyInstance): void {
+  api.get("/health", async () => ({
     ok: true,
     service: "hhc-agent",
     model: env.HHC_MODEL,
     offline: isOffline(),
     anthropicKey: hasAnthropicKey(),
     caseDb: isDbEnabled(),
+    auth: isAuthEnabled(),
   }));
 
-  app.post("/interpret", async (req, reply) => {
+  api.post("/interpret", async (req, reply) => {
     const parsed = InterpretBodySchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
@@ -96,7 +106,7 @@ export function buildServer() {
 
   // §7 OSINT is slow (multi-step tool-use). Run it as a background job and poll,
   // so no single request stays open long enough to hit a proxy/gateway 504.
-  app.post("/osint", async (req, reply) => {
+  api.post("/osint", async (req, reply) => {
     const parsed = SubjectHintSchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
@@ -129,7 +139,7 @@ export function buildServer() {
     return reply.send({ ok: true, jobId });
   });
 
-  app.get<{ Params: { jobId: string } }>("/osint/:jobId", async (req, reply) => {
+  api.get<{ Params: { jobId: string } }>("/osint/:jobId", async (req, reply) => {
     const job = osintJobs.get(req.params.jobId);
     if (!job) return reply.code(404).send({ error: "job_not_found" });
     // Terminal jobs are kept (swept after 30 min) so a retry can re-read them.
@@ -137,7 +147,7 @@ export function buildServer() {
   });
 
   // §7.2/§5-1 — instant recall of a known subject (read happens BEFORE any query).
-  app.post("/subject/recall", async (req, reply) => {
+  api.post("/subject/recall", async (req, reply) => {
     const parsed = IdentifiersSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
     if (!isDbEnabled()) {
@@ -147,7 +157,7 @@ export function buildServer() {
   });
 
   // §7.3/§7.5 — record an assessment into the encrypted case history; returns the diff.
-  app.post("/inquiry", async (req, reply) => {
+  api.post("/inquiry", async (req, reply) => {
     const parsed = InquiryBodySchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request", detail: parsed.error.message });
     if (!isDbEnabled()) {
@@ -161,14 +171,14 @@ export function buildServer() {
   });
 
   // §7.6 — personal threat-landscape statistics.
-  app.get("/stats", async (_req, reply) => {
+  api.get("/stats", async (_req, reply) => {
     if (!isDbEnabled()) return reply.send({ ok: true, enabled: false });
     const { inquiries, subjects } = getStatsRows(getDb());
     return reply.send({ ok: true, enabled: true, stats: computeStats(inquiries, subjects) });
   });
 
   // §9 — age-encrypted export of the whole case DB (survives outside the Codespace).
-  app.get("/export", async (_req, reply) => {
+  api.get("/export", async (_req, reply) => {
     if (!isDbEnabled()) return reply.code(503).send({ error: "db_disabled" });
     try {
       const data = await exportCaseArmored(getDb(), env.HHC_DB_KEY);
@@ -180,7 +190,7 @@ export function buildServer() {
   });
 
   // §5-7 — AI-organized integrated report built on top of the deterministic facts.
-  app.post("/report", async (req, reply) => {
+  api.post("/report", async (req, reply) => {
     const Body = z.object({
       lang: z.enum(["ja", "en"]).default("ja"),
       assessment: z
@@ -220,7 +230,7 @@ export function buildServer() {
   });
 
   // §9 — import (merge) an age-encrypted export back in.
-  app.post("/import", async (req, reply) => {
+  api.post("/import", async (req, reply) => {
     const parsed = z.object({ data: z.string().min(1) }).safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "bad_request" });
     if (!isDbEnabled()) return reply.code(503).send({ error: "db_disabled" });
@@ -231,16 +241,57 @@ export function buildServer() {
       return reply.code(400).send({ error: (e as Error).message });
     }
   });
+}
+
+export interface BuildServerOpts {
+  /** Inject a DB (e.g. openTestDb()) so auth tests don't need HHC_DB_KEY. */
+  db?: DB;
+}
+
+export function buildServer(opts: BuildServerOpts = {}): FastifyInstance {
+  // Screenshots / PDFs are base64 (≈ +33%) → allow a generous body limit.
+  // trustProxy in served mode so req.ip reads the platform's X-Forwarded-For.
+  const app = Fastify({ logger: false, bodyLimit: 60 * 1024 * 1024, trustProxy: isServeWeb() });
+  const getDbHandle = (): DB => opts.db ?? getDb();
+
+  void app.register(fastifyCookie, { secret: env.HHC_SESSION_SECRET || undefined });
+
+  // Served mode: Fastify is the public edge — serve the built SPA + a fallback so
+  // the client router's deep links resolve. The /api routes are handled below.
+  if (isServeWeb()) {
+    void app.register(fastifyStatic, { root: webDistDir(), prefix: "/", wildcard: false });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.method === "GET" && !req.url.startsWith("/api")) {
+        return reply.type("text/html").sendFile("index.html");
+      }
+      return reply.code(404).send({ error: "not_found" });
+    });
+  }
+
+  void app.register(
+    async (api) => {
+      if (isAuthEnabled()) api.addHook("onRequest", makeAuthOnRequest(getDbHandle));
+      registerFeatureRoutes(api);
+      if (isAuthEnabled()) {
+        registerAuthRoutes(api, getDbHandle);
+        registerAdminRoutes(api, getDbHandle);
+      }
+    },
+    { prefix: "/api" },
+  );
 
   return app;
 }
 
 async function main() {
+  assertAuthConfig(); // fail fast if HHC_AUTH=1 without HHC_DB_KEY / HHC_SESSION_SECRET
+  if (isAuthEnabled()) bootstrapAdmin(getDb()); // create the first admin if none exists
   const app = buildServer();
+  const host = isServeWeb() ? "0.0.0.0" : "127.0.0.1";
   try {
-    await app.listen({ host: "127.0.0.1", port: env.HHC_AGENT_PORT });
+    await app.listen({ host, port: env.HHC_AGENT_PORT });
     console.log(
-      `[hhc-agent] http://127.0.0.1:${env.HHC_AGENT_PORT}  model=${env.HHC_MODEL} offline=${isOffline()} key=${hasAnthropicKey()} caseDb=${isDbEnabled()}`,
+      `[hhc-agent] http://${host}:${env.HHC_AGENT_PORT}  model=${env.HHC_MODEL} offline=${isOffline()} key=${hasAnthropicKey()} caseDb=${isDbEnabled()} auth=${isAuthEnabled()} serveWeb=${isServeWeb()}`,
     );
   } catch (err) {
     console.error(err);

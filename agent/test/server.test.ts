@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { buildServer } from "../src/server";
 
 describe("agent server routes (no network, no API key)", () => {
-  it("GET /health reports status", async () => {
+  it("GET /api/health reports status", async () => {
     const app = buildServer();
-    const res = await app.inject({ method: "GET", url: "/health" });
+    const res = await app.inject({ method: "GET", url: "/api/health" });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.service).toBe("hhc-agent");
@@ -12,11 +12,11 @@ describe("agent server routes (no network, no API key)", () => {
     await app.close();
   });
 
-  it("POST /interpret without consent → 403", async () => {
+  it("POST /api/interpret without consent → 403", async () => {
     const app = buildServer();
     const res = await app.inject({
       method: "POST",
-      url: "/interpret",
+      url: "/api/interpret",
       payload: { text: "hello", consent: false },
     });
     expect(res.statusCode).toBe(403);
@@ -24,11 +24,11 @@ describe("agent server routes (no network, no API key)", () => {
     await app.close();
   });
 
-  it("POST /interpret with consent but no API key → 503 no_api_key", async () => {
+  it("POST /api/interpret with consent but no API key → 503 no_api_key", async () => {
     const app = buildServer();
     const res = await app.inject({
       method: "POST",
-      url: "/interpret",
+      url: "/api/interpret",
       payload: { text: "hello", consent: true },
     });
     expect(res.statusCode).toBe(503);

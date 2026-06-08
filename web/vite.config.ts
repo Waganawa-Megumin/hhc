@@ -25,7 +25,9 @@ export default defineConfig({
       "/api": {
         target: process.env.HHC_AGENT_URL ?? "http://127.0.0.1:8787",
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
+        // The agent mounts all routes under /api (same as served mode), so the
+        // browser uses the same /api/* paths in dev and in production — do NOT
+        // strip the prefix. Cookies stay same-origin through the proxy.
         // §6 interpret can take a while with screenshots; don't time it out early.
         timeout: 180000,
         proxyTimeout: 180000,

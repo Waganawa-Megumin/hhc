@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "HHC — Human Hunter Check",
-    "subtitle": "Self-triage whether someone you find suspicious — a recruiter, an applicant/contractor, a visitor — is an impostor or a recruitment front",
+    "subtitle": "Self-triage someone you find suspicious — a recruiter, an applicant/contractor, a visitor, and so on",
     "intro": "Tick the warning signs you noticed about anyone you find suspicious — a recruiter who approached you, someone applying to / contracting on your posting, a visitor, and so on — and HHC shows a risk band and a recommended action.",
     "disclaimer": "This tool makes no accusations. It does not label anyone a \"spy\" or decide guilt/innocence. The output is only a risk band (low/medium/high) and advice on what to do. Layer-1 runs entirely on your device and sends nothing."
   },

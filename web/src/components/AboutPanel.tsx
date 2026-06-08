@@ -105,16 +105,29 @@ const L = {
   scoreHead: { ja: "スコアリングの考え方", en: "How scoring works" },
   score: {
     ja: [
-      "決定論スコア = 該当指標の重み合計 × 標的属性係数（E1 ×1.3 / E2 ×1.2）",
-      "クリティカル・オーバーライド: D3単独 / C2＋D1 / 人間確認F1 → スコアに関わらず『高』",
-      "帯域: 0–5 低 / 6–12 中 / 13+ 高",
-      "F1（指定リスト合致）はOSINTで高確信時に自動チェック（同名・翻字の誤検出なら解除）",
+      "リスク帯域: 低 0–5 / 中 6–12 / 高 13+（スコア13以上で『高』）。",
+      "決定論スコア = 該当指標の重みの合計 × 標的係数（E1 機密/先端技術アクセス ×1.3、E2 政府・防衛・研究の現/元関係者 ×1.2）。",
+      "F（制裁・リスト）: F1=+5（人間確認・クリティカル）／ F2=+3／ F3=0（弱い一致は参考のみ・非加点）。",
+      "AIの提案より決定論スコアが常に優先。『証拠なし＝無実ではない』（リスト不掲載でスコアは下げない）。",
     ],
     en: [
-      "Deterministic score = sum of matched weights × target coefficients (E1 ×1.3 / E2 ×1.2)",
-      "Critical overrides: D3 alone / C2+D1 / human-confirmed F1 → forces 'high' regardless of score",
-      "Bands: 0–5 low / 6–12 med / 13+ high",
-      "F1 (designation-list match) auto-ticks on a high-confidence OSINT hit; untick if a same-name/translit false positive",
+      "Risk bands: low 0–5 / mid 6–12 / high 13+ (a score ≥13 is 'high').",
+      "Deterministic score = sum of matched indicator weights × target coefficients (E1 access to classified/advanced tech ×1.3, E2 current/former gov/defense/research ×1.2).",
+      "F (sanctions/lists): F1=+5 (human-confirmed, critical) / F2=+3 / F3=0 (weak match = reference only, not scored).",
+      "The deterministic score always overrides the AI. \"No evidence\" is not innocence (absence from a list never lowers the score).",
+    ],
+  },
+  criticalHead: { ja: "クリティカル指標（点数に関わらず『高』に強制昇格）", en: "Critical indicators (force 'high' regardless of score)" },
+  critical: {
+    ja: [
+      "D3 — 報酬と引き換えに情報提供を持ちかける: これ単独で『高』。",
+      "C2＋D1 — 早期に暗号化/記録の残らない場へ誘導 ＋ 非公開情報・所属・人脈・アクセス権を探る（または機密システムへのアクセス要求）: 両方そろうと『高』。",
+      "F1（人間確認済）— 募集元/関連法人/個人/所属機関が指定リスト（OFAC SDN・BIS Entity・UN/EU/英OFSI・METI外国ユーザーリスト等）に高確信で合致し、人間が同定を確認: 『高』。同名・翻字の誤検出なら解除。",
+    ],
+    en: [
+      "D3 — proposes paying in exchange for information: forces 'high' on its own.",
+      "C2+D1 — early push to encrypted/off-record channels AND probing your non-public info / affiliations / network / access (or seeking access to sensitive systems): both together force 'high'.",
+      "F1 (human-confirmed) — recruiter/related entity/person/affiliated institution matches a designation list (OFAC SDN, BIS Entity, UN/EU/UK OFSI, METI end-user list, …) with high confidence and a human confirms identity: 'high'. Untick if a same-name/transliteration false positive.",
     ],
   },
   privacyHead: { ja: "プライバシー", en: "Privacy" },
@@ -199,6 +212,9 @@ export function AboutPanel({ onClose }: { onClose: () => void }) {
 
           <h3>{L.scoreHead[lang]}</h3>
           {list(L.score[lang])}
+
+          <h3>{L.criticalHead[lang]}</h3>
+          {list(L.critical[lang])}
 
           <h3>{L.privacyHead[lang]}</h3>
           {list(L.privacy[lang])}

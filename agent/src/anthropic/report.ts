@@ -28,7 +28,7 @@ Authoritative inputs (do NOT change them, do NOT invent findings beyond them):
 
 Write these sections (translate the headings into the requested language):
 1. Summary (概要)
-2. Risk verdict — band, score, and which critical flags fired (リスク判定)
+2. Risk verdict — band, score, the band-threshold legend (low/mid/high ranges from the draft's "判定基準/criteria" section), and which critical indicators fired AND what each means (リスク判定). Keep the scoring-criteria legend so the reader can interpret a number like 17.
 3. Matched indicators and why (該当指標と理由)
 4. OSINT results — render the per-source results as a Markdown TABLE with columns "Source / Status / Detail" (translate the headers); then list watchlist candidates with their match strength and which part matched (OSINT結果)
 5. Recommended actions (推奨アクション)

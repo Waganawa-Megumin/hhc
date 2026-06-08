@@ -1,5 +1,7 @@
 # HHC 起動ガイド（GitHub Codespaces）
 
+> 🌐 [English](../en/launch-guide.md) ｜ **日本語**
+
 毎回の起動から、最新の取り込み・トラブル対処・停止までの操作手順です。
 
 ---

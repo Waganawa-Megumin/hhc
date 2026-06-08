@@ -1,5 +1,7 @@
 # HHC アーキテクチャ & デプロイ要件
 
+> 🌐 [English](../en/architecture.md) ｜ **日本語**
+
 このリポジトリから（Codespaces に限らず）一般的にシステムを構築・運用する際に**何を用意する必要があるか**をまとめます。コマンドは英語のまま、解説は日本語です。
 
 ## 1. 構成（モノレポ）
@@ -36,7 +38,7 @@ npm workspaces の3パッケージ:
 | 監査 | `HHC_SIEM_URL` / `HHC_SIEM_TOKEN` / `HHC_SIEM_FORMAT` | 任意 | 監査イベントを Splunk HEC / 汎用Webhook へ転送 |
 | 配信 | TLSリバースプロキシ | 本番推奨 | 下記参照 |
 
-全変数の説明は [`.env.example`](../.env.example)。
+全変数の説明は [`.env.example`](../../.env.example)。
 
 ## 3. 一般的な本番デプロイ手順
 
@@ -83,4 +85,4 @@ npm run serve          # build → Fastify が 8787 で SPA+API を配信（HHC_
 - そのため**水平スケール（複数インスタンス）は非対応**（セッション/ジョブ/DBが共有されない）。可用性が必要なら単一の常駐＋自動再起動＋バックアップで運用してください。将来的に共有DB（Postgres等）やセッションストア外出しが必要なら `agent/src/db/db.ts`（ドライバ隔離）と `authStore`/`auditStore` を差し替える設計です。
 
 ---
-関連: [README](../README.md) ・ [起動ガイド（Codespaces）](起動ガイド.md) ・ [管理者ガイド](管理者ガイド.md)
+関連: [README](../../README.md) ・ [起動ガイド](launch-guide.md) ・ [管理者ガイド](admin-guide.md) ・ [English](../en/architecture.md)

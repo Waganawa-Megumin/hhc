@@ -1,5 +1,7 @@
 # HHC 管理者ガイド
 
+> 🌐 [English](../en/admin-guide.md) ｜ **日本語**
+
 認証を有効化した HHC（`HHC_AUTH=1`）を運用する管理者向けの手順書です。アプリ更新に合わせて本書も更新します。
 
 ## 1. 有効化と前提
@@ -15,7 +17,7 @@ HHC_ADMIN_INITIAL_PASSWORD=<初期PW>     # 初回ログインで変更必須
 # 任意: SMTP_*（招待メール／メールMFA）, HHC_AUDIT_RETENTION_DAYS, HHC_SIEM_*
 ```
 
-> いずれか欠けると起動を拒否（`auth_misconfigured`）。詳細・全変数は [ARCHITECTURE.md](ARCHITECTURE.md) と `.env.example`。
+> いずれか欠けると起動を拒否（`auth_misconfigured`）。詳細・全変数は [アーキテクチャ](architecture.md) と `.env.example`。
 
 ## 2. 初回セットアップ
 
@@ -68,11 +70,11 @@ HHC_ADMIN_INITIAL_PASSWORD=<初期PW>     # 初回ログインで変更必須
 | 症状 | 対処 |
 |---|---|
 | 起動時 `auth_misconfigured` | `HHC_DB_KEY` / `HHC_SESSION_SECRET` 等の必須シークレット不足。設定して再起動 |
-| ログイン画面が出ない（`auth=false`） | シークレット未注入。Rebuild / Stop→Start（[起動ガイド](起動ガイド.md)参照） |
+| ログイン画面が出ない（`auth=false`） | シークレット未注入。Rebuild / Stop→Start（[起動ガイド](launch-guide.md)参照） |
 | 招待メールが届かない | SMTP未設定/失敗。画面の招待リンクを手動共有、または `SMTP_*` を設定 |
 | ロケーションが「不明」 | ループバック/内部IP、または `npm run dev`（実IP非可視）。実IPは `npm run serve`＋TLSプロキシ |
 | MFAコードが通らない | TOTPは端末時刻ずれを確認。メールは再送。最終手段は Admin が「MFA再登録」 |
 | 最後のAdminを無効化できない | 仕様（最低1名のAdminを保護）。先に別のAdminを用意 |
 
 ---
-関連: [README](../README.md) ・ [ARCHITECTURE.md](ARCHITECTURE.md) ・ [起動ガイド（Codespaces）](起動ガイド.md)
+関連: [README](../../README.md) ・ [アーキテクチャ](architecture.md) ・ [起動ガイド](launch-guide.md) ・ [English](../en/admin-guide.md)

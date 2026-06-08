@@ -85,7 +85,7 @@ recommended action, copy a report draft, and freeze a SHA-256 evidence snapshot.
 
 ## Run in GitHub Codespaces (browser, keys in Secrets)
 
-> 日本語の操作ガイド（毎回の起動・更新・トラブル対処）: [`docs/起動ガイド.md`](docs/起動ガイド.md)
+> Launch / update / troubleshooting guide: [English](docs/en/launch-guide.md) · [日本語](docs/ja/launch-guide.md)
 
 Run the whole thing from a browser with your API key stored as a **Codespaces
 secret** — never in the repo or on disk. The devcontainer maps the secret to the
@@ -197,12 +197,14 @@ build.
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and **general deployment
-  requirements** (what to provide beyond API keys: the embedded encrypted DB, SMTP for
-  email, TLS reverse proxy for real client IP, SIEM, scaling limits).
-- [`docs/管理者ガイド.md`](docs/管理者ガイド.md) — **administrator guide** (enabling auth,
-  inviting users, MFA, roles, the audit log: retention / export / SIEM, backup, troubleshooting).
-- [`docs/起動ガイド.md`](docs/起動ガイド.md) — Codespaces launch / update / troubleshooting guide (JA).
+Available in English (`docs/en/`) and Japanese (`docs/ja/`) — see the [docs index](docs/README.md):
+
+- **Architecture & deployment requirements** (what to provide beyond API keys: the
+  embedded encrypted DB, SMTP for email, a TLS reverse proxy for the real client IP,
+  SIEM, scaling limits) — [English](docs/en/architecture.md) · [日本語](docs/ja/architecture.md)
+- **Administrator guide** (enabling auth, inviting users, MFA, roles, the audit log:
+  retention / export / SIEM, backup, troubleshooting) — [English](docs/en/admin-guide.md) · [日本語](docs/ja/admin-guide.md)
+- **Launch guide** (Codespaces: start / update / troubleshooting) — [English](docs/en/launch-guide.md) · [日本語](docs/ja/launch-guide.md)
 
 ## Support
 

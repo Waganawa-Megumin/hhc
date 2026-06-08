@@ -145,6 +145,36 @@ instead of failing the run. Free source registrations (NTA app ID, Trade.gov,
 OpenSanctions/OpenCorporates) are listed in `.env.example`; the keyless paths
 (RDAP, crt.sh, self-hosted OpenSanctions, reverse-image links) work immediately.
 
+## Authentication, accounts & MFA (optional)
+
+Off by default (`HHC_AUTH=0`) — HHC stays keyless/local as above. Set **`HHC_AUTH=1`**
+to require login for the whole app: email-ID accounts with **Admin / User** roles,
+password + **MFA (TOTP and/or email codes)**, an Admin user-management screen, and
+(Phase 2) an audit log + dashboard. Accounts live in the existing encrypted SQLCipher
+DB, so `HHC_DB_KEY` and `HHC_SESSION_SECRET` become **required** when auth is on.
+
+Enable it (Codespaces secrets or `.env`):
+
+```
+HHC_AUTH=1
+HHC_DB_KEY=<strong passphrase>
+HHC_SESSION_SECRET=<openssl rand -base64 48>
+HHC_ADMIN_EMAIL=you@example.com
+HHC_ADMIN_INITIAL_PASSWORD=<temporary password>
+# optional, for email-code MFA (else use TOTP): SMTP_HOST/PORT/SECURE/USER/PASS/FROM
+```
+
+- **First run** creates the admin from `HHC_ADMIN_*`; first login **forces a password
+  change then MFA enrollment** (TOTP shows a QR; email sends a code with a resend
+  button). The Admin can then create users at **`/admin`**.
+- **Dev (HMR):** `npm run dev` — the SPA on 5173 proxies `/api` to the authed agent;
+  the session cookie is same-origin through the proxy.
+- **Served edge (real client IP for the audit log):** `npm run serve` — Fastify serves
+  the built SPA + API itself on **8787** (bind `0.0.0.0`, `trustProxy`). In Codespaces,
+  make **port 8787** public for this mode.
+- MFA email and IP-geolocation **degrade gracefully** if SMTP / the geo API is
+  unreachable (TOTP is the robust default). No passwords/secrets/codes are ever logged.
+
 ## Privacy & security
 
 - Layer-1 runs entirely on your device and sends nothing.

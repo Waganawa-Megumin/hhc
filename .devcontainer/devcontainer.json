@@ -14,13 +14,14 @@
   // a port to public; it resets to private on restart). Harmless if not permitted.
   "postStartCommand": "nohup bash .devcontainer/publish-port.sh 5173 >/tmp/hhc-publish-port.log 2>&1 &",
 
-  // Only the web UI is forwarded. The agent backend (port 8787) holds your API
-  // key and binds 127.0.0.1; the web dev server reaches it via an in-container
-  // proxy, so it is never exposed publicly.
-  "forwardPorts": [5173],
+  // Dev mode (npm run dev): the web UI is forwarded on 5173 and proxies /api to the
+  // agent on 127.0.0.1:8787 (API key server-side). Served/auth mode (npm run serve):
+  // Fastify serves the SPA + API itself on 8787 (the public edge, with trustProxy) —
+  // make 8787 public for that.
+  "forwardPorts": [5173, 8787],
   "portsAttributes": {
-    "5173": { "label": "HHC web (Layer-1 UI)", "onAutoForward": "openPreview" },
-    "8787": { "label": "HHC agent backend (internal)", "onAutoForward": "ignore" }
+    "5173": { "label": "HHC web (dev edge)", "onAutoForward": "openPreview" },
+    "8787": { "label": "HHC app (served/auth edge)", "onAutoForward": "silent" }
   },
 
   // Documents the Codespaces secrets to create. When granted to this repo they
@@ -33,7 +34,22 @@
       "description": "Alias for ANTHROPIC_API_KEY — use this OR ANTHROPIC_API_KEY, not both."
     },
     "HHC_DB_KEY": {
-      "description": "Passphrase for the encrypted local case DB (§7.3). Optional; leave unset to disable case history."
+      "description": "Passphrase for the encrypted local case DB / accounts (SQLCipher). Optional normally; REQUIRED when HHC_AUTH=1 (accounts + sessions live here)."
+    },
+    "HHC_AUTH": {
+      "description": "Set to 1 to require login for the whole app (Admin/User accounts + MFA). Needs HHC_DB_KEY, HHC_SESSION_SECRET, HHC_ADMIN_EMAIL, HHC_ADMIN_INITIAL_PASSWORD."
+    },
+    "HHC_SESSION_SECRET": {
+      "description": "Long random secret for session cookies + sealing the TOTP secret. Required when HHC_AUTH=1 (e.g. `openssl rand -base64 48`)."
+    },
+    "HHC_ADMIN_EMAIL": {
+      "description": "Email of the first admin, created on first run when HHC_AUTH=1 and no users exist."
+    },
+    "HHC_ADMIN_INITIAL_PASSWORD": {
+      "description": "Initial password for the first admin (must be changed + MFA enrolled at first login). Required when HHC_AUTH=1."
+    },
+    "SMTP_HOST": {
+      "description": "Optional SMTP host for email MFA codes (with SMTP_PORT/SMTP_SECURE/SMTP_USER/SMTP_PASS/SMTP_FROM). Unset → email MFA is a no-op; use TOTP."
     }
   },
 

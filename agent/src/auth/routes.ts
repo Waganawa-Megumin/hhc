@@ -55,9 +55,12 @@ function clearSessionCookie(reply: FastifyReply): void {
  * request's protocol/host, so it works behind the Vite proxy (dev) and the Fastify
  * edge (served, where trustProxy gives the forwarded scheme/host). */
 function inviteLink(req: FastifyRequest, rawToken: string): string {
-  const host = String(req.headers["host"] ?? "localhost");
-  return `${req.protocol}://${host}/invite/${rawToken}`;
+  // Prefer the configured public URL (correct for emails behind a proxy); else derive
+  // from the request. The admin UI rebuilds its copy from the browser origin anyway.
+  const base = env.HHC_APP_URL.trim() || `${req.protocol}://${String(req.headers["host"] ?? "localhost")}`;
+  return `${base.replace(/\/$/, "")}/invite/${rawToken}`;
 }
+const invitePath = (rawToken: string): string => `/invite/${rawToken}`;
 
 export function registerAuthRoutes(api: FastifyInstance, getDb: () => DB): void {
   // ── login: password step ───────────────────────────────────────────────────
@@ -335,7 +338,7 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
       const { user, rawToken } = adminCreateUser(getDb(), parsed.data.email, parsed.data.role);
       const link = inviteLink(req, rawToken);
       const emailStatus = await sendInviteEmail(user.email, link);
-      return reply.send({ ok: true, user: toPublicUser(user), inviteLink: link, emailStatus });
+      return reply.send({ ok: true, user: toPublicUser(user), inviteLink: link, invitePath: invitePath(rawToken), emailStatus });
     } catch (e) {
       return reply.code(400).send({ error: (e as Error).message });
     }
@@ -371,7 +374,7 @@ export function registerAdminRoutes(api: FastifyInstance, getDb: () => DB): void
           const { rawToken, email } = adminResendInvite(db, id);
           const link = inviteLink(req, rawToken);
           const emailStatus = await sendInviteEmail(email, link);
-          return reply.send({ ok: true, inviteLink: link, emailStatus });
+          return reply.send({ ok: true, inviteLink: link, invitePath: invitePath(rawToken), emailStatus });
         }
       }
     } catch (e) {

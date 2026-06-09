@@ -33,7 +33,10 @@ export default function UsersPage() {
     setError(null);
     const r = await authApi.adminCreateUser(newEmail.trim().toLowerCase(), newRole);
     if (!r.ok) return setError(r.data.error ?? "error");
-    setNotice({ kind: "invite", email: r.data.user.email, link: r.data.inviteLink, emailStatus: r.data.emailStatus });
+    // Build the link from the admin's actual browser origin (correct externally even
+    // behind a dev proxy); fall back to the server-built link.
+    const link = r.data.invitePath ? window.location.origin + r.data.invitePath : r.data.inviteLink;
+    setNotice({ kind: "invite", email: r.data.user.email, link, emailStatus: r.data.emailStatus });
     setNewEmail("");
     await load();
   }
@@ -44,8 +47,9 @@ export default function UsersPage() {
     if (!r.ok) return setError(r.data.error ?? "error");
     if (body.action === "reset-password" && r.data.initialPassword) {
       setNotice({ kind: "password", email: u.email, pw: r.data.initialPassword });
-    } else if (body.action === "resend-invite" && r.data.inviteLink) {
-      setNotice({ kind: "invite", email: u.email, link: r.data.inviteLink, emailStatus: r.data.emailStatus ?? "" });
+    } else if (body.action === "resend-invite" && (r.data.invitePath || r.data.inviteLink)) {
+      const link = r.data.invitePath ? window.location.origin + r.data.invitePath : r.data.inviteLink!;
+      setNotice({ kind: "invite", email: u.email, link, emailStatus: r.data.emailStatus ?? "" });
     }
     await load();
   }

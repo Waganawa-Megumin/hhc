@@ -57,7 +57,7 @@ export const authApi = {
   // admin
   adminListUsers: () => req<{ users: PublicUser[] }>("GET", "/api/admin/users"),
   adminCreateUser: (email: string, role: Role) =>
-    req<{ user: PublicUser; inviteLink: string; emailStatus: string }>("POST", "/api/admin/users", { email, role }),
+    req<{ user: PublicUser; inviteLink: string; invitePath: string; emailStatus: string }>("POST", "/api/admin/users", { email, role }),
   adminPatchUser: (
     id: string,
     body: {
@@ -65,7 +65,7 @@ export const authApi = {
       role?: Role;
       status?: "active" | "disabled";
     },
-  ) => req<{ initialPassword?: string; inviteLink?: string; emailStatus?: string }>("PATCH", `/api/admin/users/${id}`, body),
+  ) => req<{ initialPassword?: string; inviteLink?: string; invitePath?: string; emailStatus?: string }>("PATCH", `/api/admin/users/${id}`, body),
 
   adminAudit: (qs: string) =>
     req<{ rows: AuditRow[]; total: number; limit: number; offset: number; retentionDays: number; siem: boolean }>(

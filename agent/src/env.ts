@@ -46,6 +46,11 @@ const EnvSchema = z.object({
   HHC_LOGIN_WINDOW_MIN: z.coerce.number().positive().default(15),
   HHC_ADMIN_EMAIL: z.string().default(""),
   HHC_ADMIN_INITIAL_PASSWORD: z.string().default(""),
+  // Public base URL of the app (e.g. https://hhc.example.com). Used to build
+  // invitation links in EMAILS. If unset, the link is derived from the request host
+  // (which is wrong behind a dev proxy); the admin UI builds its link from the
+  // browser origin regardless.
+  HHC_APP_URL: z.string().default(""),
   // Email-MFA transport (optional; unset → email MFA is a graceful no-op).
   SMTP_HOST: z.string().default(""),
   SMTP_PORT: z.coerce.number().int().positive().default(587),

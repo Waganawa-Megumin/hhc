@@ -9,6 +9,7 @@
     "start": "tsx src/server.ts",
     "serve": "HHC_SERVE_WEB=1 HHC_AUTH=1 tsx src/server.ts",
     "seed": "tsx src/db/seed.ts",
+    "unlock": "tsx src/db/unlockLogins.ts",
     "export": "tsx src/db/exportCase.ts",
     "import": "tsx src/db/importCase.ts"
   },

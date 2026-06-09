@@ -20,6 +20,7 @@
     "dev:web": "npm run dev --workspace web",
     "dev:agent": "npm run dev --workspace agent",
     "seed": "npm run seed --workspace agent",
+    "unlock": "npm run unlock --workspace agent --",
     "export": "npm run export --workspace agent --",
     "import": "npm run import --workspace agent --"
   },

@@ -72,7 +72,8 @@ export function registerAuthRoutes(api: FastifyInstance, getDb: () => DB): void 
     const ip = req.ip;
 
     const since = new Date(Date.now() - env.HHC_LOGIN_WINDOW_MIN * 60_000).toISOString();
-    if (store.countRecentFailures(db, email, ip, since) >= env.HHC_LOGIN_MAX_FAILS) {
+    const fails = store.recentFailureCounts(db, email, ip, since);
+    if (fails.byEmail >= env.HHC_LOGIN_MAX_FAILS || fails.byIp >= env.HHC_LOGIN_IP_MAX_FAILS) {
       store.recordLoginAttempt(db, { email, ip, success: false, reason: "locked" });
       return reply.code(429).send({ error: "locked" });
     }
@@ -82,6 +83,8 @@ export function registerAuthRoutes(api: FastifyInstance, getDb: () => DB): void 
       store.recordLoginAttempt(db, { email, ip, success: false, reason: "invalid_credentials" });
       return reply.code(401).send({ error: "invalid_credentials" });
     }
+    // Password correct → clear the failure history so a few earlier fumbles don't linger.
+    store.clearLoginFailures(db, email);
 
     const enrolled = user.mfa_enrolled === 1 && user.mfa_method !== "none";
     const { raw, hash } = newSessionToken();

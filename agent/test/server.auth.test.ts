@@ -5,6 +5,7 @@ import { openTestDb, type DB } from "../src/db/db";
 import * as store from "../src/db/authStore";
 import { hashPassword } from "../src/auth/passwords";
 import { newSessionToken, absoluteExpiry } from "../src/auth/sessions";
+import { env } from "../src/env";
 
 beforeAll(() => {
   process.env.HHC_AUTH = "1"; // isAuthEnabled() reads process.env live
@@ -50,16 +51,31 @@ describe("server auth: login, lockout, roles", () => {
     await app.close();
   });
 
-  it("locks out after too many failures", async () => {
+  it("locks out after HHC_LOGIN_MAX_FAILS password failures", async () => {
     const db = openTestDb();
     seedReady(db, "admin@hhc.local", "admin");
     const app = buildServer({ db });
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < env.HHC_LOGIN_MAX_FAILS; i++) {
       await app.inject({ method: "POST", url: "/api/auth/login", payload: { email: "admin@hhc.local", password: "bad" } });
     }
     const res = await app.inject({ method: "POST", url: "/api/auth/login", payload: { email: "admin@hhc.local", password: "Password12345" } });
     expect(res.statusCode).toBe(429);
     expect(res.json().error).toBe("locked");
+    await app.close();
+  });
+
+  it("a successful password clears the failure count (no lingering lockout)", async () => {
+    const db = openTestDb();
+    seedReady(db, "admin@hhc.local", "admin");
+    const app = buildServer({ db });
+    for (let i = 0; i < env.HHC_LOGIN_MAX_FAILS - 1; i++) {
+      await app.inject({ method: "POST", url: "/api/auth/login", payload: { email: "admin@hhc.local", password: "bad" } });
+    }
+    const good = await app.inject({ method: "POST", url: "/api/auth/login", payload: { email: "admin@hhc.local", password: "Password12345" } });
+    expect(good.statusCode).toBe(200); // not locked yet, and clears the history
+    const after = await app.inject({ method: "POST", url: "/api/auth/login", payload: { email: "admin@hhc.local", password: "bad" } });
+    expect(after.statusCode).toBe(401); // treated fresh, not locked
+    expect(after.json().error).toBe("invalid_credentials");
     await app.close();
   });
 

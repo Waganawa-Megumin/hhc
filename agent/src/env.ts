@@ -42,8 +42,12 @@ const EnvSchema = z.object({
   HHC_SESSION_SECRET: z.string().default(""),
   HHC_SESSION_TTL_HOURS: z.coerce.number().positive().default(12),
   HHC_SESSION_IDLE_MIN: z.coerce.number().positive().default(60),
-  HHC_LOGIN_MAX_FAILS: z.coerce.number().int().positive().default(5),
-  HHC_LOGIN_WINDOW_MIN: z.coerce.number().positive().default(15),
+  // Lockout: per-EMAIL failed password attempts within the window. Lenient defaults;
+  // a successful password clears the count. MFA-code failures do NOT count here.
+  HHC_LOGIN_MAX_FAILS: z.coerce.number().int().positive().default(10),
+  HHC_LOGIN_WINDOW_MIN: z.coerce.number().positive().default(10),
+  // Per-IP cap (much higher) so a shared egress IP / NAT can't lock out individuals.
+  HHC_LOGIN_IP_MAX_FAILS: z.coerce.number().int().positive().default(50),
   HHC_ADMIN_EMAIL: z.string().default(""),
   HHC_ADMIN_INITIAL_PASSWORD: z.string().default(""),
   // Public base URL of the app (e.g. https://hhc.example.com). Used to build

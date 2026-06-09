@@ -26,12 +26,16 @@ describe("auth/sessions store", () => {
     db.close();
   });
 
-  it("counts recent login failures by email OR ip (lockout input)", () => {
+  it("counts recent PASSWORD failures split by email/ip (MFA fails excluded), and clears", () => {
     const db = openTestDb();
     const since = new Date(Date.now() - 60_000).toISOString();
-    for (let i = 0; i < 3; i++) store.recordLoginAttempt(db, { email: "x@y.co", ip: "1.2.3.4", success: false });
-    expect(store.countRecentFailures(db, "x@y.co", "9.9.9.9", since)).toBe(3); // matched by email
-    expect(store.countRecentFailures(db, "other@y.co", "1.2.3.4", since)).toBe(3); // matched by ip
+    for (let i = 0; i < 3; i++)
+      store.recordLoginAttempt(db, { email: "x@y.co", ip: "1.2.3.4", success: false, reason: "invalid_credentials" });
+    store.recordLoginAttempt(db, { email: "x@y.co", ip: "1.2.3.4", success: false, reason: "mfa_fail" }); // not counted
+    expect(store.recentFailureCounts(db, "x@y.co", "9.9.9.9", since).byEmail).toBe(3);
+    expect(store.recentFailureCounts(db, "other@y.co", "1.2.3.4", since).byIp).toBe(3);
+    store.clearLoginFailures(db, "x@y.co");
+    expect(store.recentFailureCounts(db, "x@y.co", "1.2.3.4", since).byEmail).toBe(0);
     db.close();
   });
 });

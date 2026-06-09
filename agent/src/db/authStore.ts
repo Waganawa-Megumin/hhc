@@ -210,17 +210,37 @@ export function recordLoginAttempt(
     a.reason ?? null,
   );
 }
-/** Recent FAILED attempts for this email OR ip since `sinceIso` (lockout input). */
-export function countRecentFailures(db: DB, email: string, ip: string | null, sinceIso: string): number {
+/** Recent FAILED PASSWORD attempts (reason 'invalid_credentials' only — MFA-code
+ * failures are excluded) since `sinceIso`, split by email and by ip. */
+export function recentFailureCounts(
+  db: DB,
+  email: string,
+  ip: string | null,
+  sinceIso: string,
+): { byEmail: number; byIp: number } {
   const byEmail = (
     db
-      .prepare("SELECT COUNT(*) AS n FROM login_attempts WHERE success = 0 AND email = ? AND ts >= ?")
+      .prepare(
+        "SELECT COUNT(*) AS n FROM login_attempts WHERE success = 0 AND reason = 'invalid_credentials' AND email = ? AND ts >= ?",
+      )
       .get(email.toLowerCase(), sinceIso) as { n: number }
   ).n;
   const byIp = ip
-    ? (db.prepare("SELECT COUNT(*) AS n FROM login_attempts WHERE success = 0 AND ip = ? AND ts >= ?").get(ip, sinceIso) as {
-        n: number;
-      }).n
+    ? (
+        db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM login_attempts WHERE success = 0 AND reason = 'invalid_credentials' AND ip = ? AND ts >= ?",
+          )
+          .get(ip, sinceIso) as { n: number }
+      ).n
     : 0;
-  return Math.max(byEmail, byIp);
+  return { byEmail, byIp };
+}
+
+/** Clear a user's failed-attempt history (called on a successful password, and by
+ * the admin unlock tool). */
+export function clearLoginFailures(db: DB, email?: string): number {
+  return email
+    ? db.prepare("DELETE FROM login_attempts WHERE email = ? AND success = 0").run(email.toLowerCase()).changes
+    : db.prepare("DELETE FROM login_attempts WHERE success = 0").run().changes;
 }

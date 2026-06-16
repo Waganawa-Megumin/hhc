@@ -35,6 +35,8 @@ HHC is a **local-first self-defense tool** that helps you self-triage whether so
 | **F** | Sanctions / export-control / watchlist | recruiter/person/**affiliated institution** matches a designation list (human-confirmed) |
 | **G** | State nexus (human-set, optional) | stated/established nationality/origin/state affiliation matches your configured states of concern (human judgement; no auto inference) |
 
+> Rendering note: **A–G are seven DISTINCT categories**. Each row's example signals are **specific to that category** — do **not** repeat the same bullets across cards (A=substance / B=account authenticity / C=behavior / D=requests / E=target coefficients / F=list match / G=state nexus).
+
 ## Scoring (easy to chart)
 - **Formula**: `score = sum of matched weights × target coefficients` (**E1 ×1.3**, **E2 ×1.2**).
 - **Bands**: **low 0–5 / mid 6–12 / high 13+**.
@@ -78,6 +80,6 @@ No "spy"-style labeling; no binary guilty verdict; nationality/ethnicity are nei
 ## Suggested infographic structure (prompt for NotebookLM)
 > Give NotebookLM something like:
 >
-> "From this source, create a **one-page infographic that explains HHC at a glance**. Suggested layout: (1) hero — one-line summary + what it is / isn't; (2) the three use cases (target / hiring side / visitor); (3) the seven indicator categories A–G; (4) how scoring works (bands low 0–5 / mid 6–12 / high 13+, coefficients E1×1.3 / E2×1.2, critical triggers D3 / C2+D1 / F1); (5) the public OSINT sources; (6) recommended actions by band; (7) guardrails (what it does NOT do). Emphasize numbers and contrasts; keep a neutral, self-defense tone — avoid accusatory language or naming specific countries."
+> "From this source, create a **one-page infographic that explains HHC at a glance**. Suggested layout: (1) hero — one-line summary + what it is / isn't; (2) the three use cases (target / hiring side / visitor); (3) **the seven indicator categories A–G, each DISTINCT — do not repeat the same example bullets across cards**; (4) how scoring works (bands low 0–5 / mid 6–12 / high 13+, coefficients E1×1.3 / E2×1.2, **all three critical triggers: D3 / C2+D1 / F1**); (5) the public OSINT sources; (6) recommended actions by band; (7) guardrails (what it does NOT do). Emphasize numbers and contrasts; keep a neutral, self-defense tone — avoid accusatory language or naming specific countries."
 
 > Sources / frameworks: 2026 Five Eyes joint warning, UK NPSA "Think Before You Link", Japan PSIA economic-security guidance, Five Eyes/FBI fraudulent-IT-worker advisories.
